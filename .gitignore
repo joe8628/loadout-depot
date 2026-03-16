@@ -1,0 +1,12 @@
+# Rig session files — ephemeral, not committed
+SCRATCHPAD.md
+
+# OS
+.DS_Store
+
+# codebase-context
+.codebase-context/chroma/
+.codebase-context/index_meta.json
+.codebase-context/mcp.log
+# optionally commit repo_map.md for team visibility:
+# .codebase-context/repo_map.md
