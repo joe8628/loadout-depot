@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Bash"
+    ],
+    "deny": [
+      "Network"
+    ]
+  },
+  "tools": {
+    "bash": {
+      "allowedCommands": [
+        "git",
+        "python",
+        "python3",
+        "node",
+        "npm",
+        "npx",
+        "tsc",
+        "mypy",
+        "ruff",
+        "eslint",
+        "clang",
+        "clang++",
+        "make",
+        "cmake",
+        "pip",
+        "pip3",
+        "pip-audit",
+        "npm audit",
+        "ccindex"
+      ]
+    }
+  }
+}
