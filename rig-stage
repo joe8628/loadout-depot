@@ -47,7 +47,8 @@ cmd_upgrade() {
   before=$(git -C "$RIG_DIR" rev-parse HEAD)
 
   log "Pulling latest from GitHub..."
-  git -C "$RIG_DIR" pull --ff-only
+  git -C "$RIG_DIR" fetch origin main
+  git -C "$RIG_DIR" reset --hard origin/main
 
   local after
   after=$(git -C "$RIG_DIR" rev-parse HEAD)
