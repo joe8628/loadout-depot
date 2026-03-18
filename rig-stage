@@ -17,7 +17,7 @@ Usage: rig-stage <command> [options]
 
 Commands:
   install   Bootstrap the current directory as an AI-assisted project
-  upgrade   Pull latest fixes from GitHub into ~/.rig
+  upgrade   Pull latest fixes from GitHub into ~/.rig and update current project
   list      List available agents and skills
   version   Print Rig version
   help      Print this message
@@ -58,6 +58,13 @@ cmd_upgrade() {
   else
     ok "Upgraded $(git -C "$RIG_DIR" rev-parse --short "$before") → $(git -C "$RIG_DIR" rev-parse --short "$after")"
     git -C "$RIG_DIR" log --oneline "${before}..${after}"
+  fi
+
+  if [[ -d ".git" ]]; then
+    log "Updating project install..."
+    cmd_install --force --no-codebase-index
+  else
+    skip "Project update (not inside a project directory)"
   fi
 }
 
