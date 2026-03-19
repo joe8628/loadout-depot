@@ -119,4 +119,42 @@ output=$(cd "$dir" && "$RIG_DIR/rig-stage" install --no-codebase-index 2>&1) || 
 assert_contains "skip message for index" "codebase index" "$output"
 cleanup "$dir"
 
+# 11. session-history-preserved-on-reinstall (B-001)
+echo ""
+echo "-- session-history-preserved-on-reinstall --"
+dir=$(setup_fixture python-project)
+(cd "$dir" && "$RIG_DIR/rig-stage" install --no-codebase-index 2>&1) || true
+echo "# existing handoff"   > "$dir/HANDOFF.md"
+echo "# existing decisions" > "$dir/DECISIONS.md"
+echo "# existing scratch"   > "$dir/SCRATCHPAD.md"
+(cd "$dir" && "$RIG_DIR/rig-stage" install --no-codebase-index 2>&1) || true
+assert_eq "HANDOFF.md preserved"   "# existing handoff"   "$(cat "$dir/HANDOFF.md")"
+assert_eq "DECISIONS.md preserved" "# existing decisions" "$(cat "$dir/DECISIONS.md")"
+content=$(cat "$dir/SCRATCHPAD.md")
+[[ "$content" != "# existing scratch" ]] && result=0 || result=1
+assert_eq "SCRATCHPAD.md overwritten" "0" "$result"
+cleanup "$dir"
+
+# 12. session-history-preserved-with-force (B-001)
+echo ""
+echo "-- session-history-preserved-with-force --"
+dir=$(setup_fixture python-project)
+(cd "$dir" && "$RIG_DIR/rig-stage" install --no-codebase-index 2>&1) || true
+echo "# existing handoff"   > "$dir/HANDOFF.md"
+echo "# existing decisions" > "$dir/DECISIONS.md"
+(cd "$dir" && "$RIG_DIR/rig-stage" install --force --no-codebase-index 2>&1) || true
+assert_eq "HANDOFF.md preserved under --force"   "# existing handoff"   "$(cat "$dir/HANDOFF.md")"
+assert_eq "DECISIONS.md preserved under --force" "# existing decisions" "$(cat "$dir/DECISIONS.md")"
+cleanup "$dir"
+
+# 13. fresh-install creates session files when absent (B-001)
+echo ""
+echo "-- fresh-install-creates-session-files --"
+dir=$(setup_fixture python-project)
+(cd "$dir" && "$RIG_DIR/rig-stage" install --no-codebase-index 2>&1) || true
+assert_file_exists "HANDOFF.md created on fresh install"   "$dir/HANDOFF.md"
+assert_file_exists "DECISIONS.md created on fresh install" "$dir/DECISIONS.md"
+assert_file_exists "SCRATCHPAD.md created on fresh install" "$dir/SCRATCHPAD.md"
+cleanup "$dir"
+
 report

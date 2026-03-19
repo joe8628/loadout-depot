@@ -188,16 +188,24 @@ cmd_install() {
     fi
   done
 
-  # Step 7: Copy session templates (always overwrite — per-session files)
+  # Step 7: Copy session templates
+  # SCRATCHPAD.md is ephemeral — always overwrite.
+  # HANDOFF.md and DECISIONS.md accumulate session history — skip if they exist.
   if $dry_run; then
-    log "[dry-run] Copy session/ → . (3 files)"
+    log "[dry-run] Copy session/SCRATCHPAD.md.template → ./SCRATCHPAD.md (always)"
+    log "[dry-run] Copy session/HANDOFF.md.template    → ./HANDOFF.md (skip if exists)"
+    log "[dry-run] Copy session/DECISIONS.md.template  → ./DECISIONS.md (skip if exists)"
   else
-    for f in "$RIG_DIR/session/"*.template; do
-      local dest_name
-      dest_name="$(basename "$f" .template)"
-      cp "$f" "./$dest_name"
+    cp "$RIG_DIR/session/SCRATCHPAD.md.template" "./SCRATCHPAD.md"
+    ok "Session template     → ./SCRATCHPAD.md (overwritten)"
+    for persistent in HANDOFF.md DECISIONS.md; do
+      if [[ -f "./$persistent" ]]; then
+        skip "./$persistent (already exists — session history preserved)"
+      else
+        cp "$RIG_DIR/session/$persistent.template" "./$persistent"
+        ok "Session template     → ./$persistent (new)"
+      fi
     done
-    ok "Session templates    → . (3 files)"
   fi
 
   # Step 8: Append .gitignore entries
