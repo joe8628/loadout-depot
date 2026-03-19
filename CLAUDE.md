@@ -1,1 +1,47 @@
 @.codebase-context/repo_map.md
+@HANDOFF.md
+@CONVENTIONS.md
+@AGENTS.md
+
+# Rig
+
+**Language/toolchain:** Bash + bats/bats-core
+**One-line description:** Bootstrap AI-assisted coding sessions with a single CLI command
+
+---
+
+## Conventions
+
+Read `CONVENTIONS.md` before writing or reviewing any code. All coding decisions
+must follow the rules defined there.
+
+## Agent Registry
+
+Read `AGENTS.md` for the full list of available agents, their roles, trigger
+conditions, and expected outputs.
+
+## Session Protocol
+
+**At the start of every session:**
+1. Run `git pull` to ensure `HANDOFF.md` and `DECISIONS.md` are current.
+2. If `HANDOFF.md` exists, read it — find the most recent block and follow its instructions.
+3. Read `CONVENTIONS.md`.
+4. Write a session header to `SCRATCHPAD.md`.
+
+**During every session:**
+- Append working notes and decisions to `SCRATCHPAD.md` as you go.
+
+**At the end of every session:**
+1. Finalise `SCRATCHPAD.md` with a session summary.
+2. Append your completed block to `HANDOFF.md`.
+3. Record any non-trivial decisions to `DECISIONS.md`.
+4. Commit and push: `git add HANDOFF.md DECISIONS.md && git commit -m "handoff: <agent> completed <task>" && git push`
+
+## Codebase Context
+
+The MCP codebase-context tool is available. Use it to explore the codebase:
+- `search_codebase` — semantic search over code symbols
+- `get_symbol` — exact symbol lookup by name
+- `get_repo_map` — compact file/class/function outline
+
+Prefer these tools over manual file reading when exploring unfamiliar code.

@@ -66,7 +66,7 @@ The spec contradicts itself: §5.3 groups all three as "always overwrite", while
 
 ### F-001 — Auto-populate CLAUDE.md placeholders after install
 
-**Status:** planned
+**Status:** done
 **Priority:** P1
 **Target version:** v1.1
 **Source:** Spec §6.4; discovered during session 2026-03-18
@@ -190,7 +190,7 @@ The `targets/gemini/` directory contains only a `README.md` stub. No `adapter.sh
 
 ### F-006 — Auto-load session files via `@file` imports in CLAUDE.md template
 
-**Status:** planned
+**Status:** done
 **Priority:** P0
 **Target version:** v1.1
 **Source:** Discovered 2026-03-18 — session files never enter context
@@ -214,7 +214,7 @@ At session start, Claude automatically has the content of `HANDOFF.md`, `CONVENT
 
 ### F-007 — Session-start hook in `settings.json.template`
 
-**Status:** planned
+**Status:** done
 **Priority:** P0
 **Target version:** v1.1
 **Source:** Discovered 2026-03-18 — `git pull` and SCRATCHPAD.md write never execute
@@ -496,13 +496,13 @@ When multiple changes finish in the same sprint, archiving them one at a time is
 | ID | Type | Title | Status | Priority | Version |
 |---|---|---|---|---|---|
 | B-001 | bug | `install` overwrites HANDOFF.md and DECISIONS.md | planned | P0 | v1.1 |
-| F-001 | feature | Auto-populate CLAUDE.md placeholders | planned | P1 | v1.1 |
+| F-001 | feature | Auto-populate CLAUDE.md placeholders | done | P1 | v1.1 |
 | F-002 | feature | `list-targets` subcommand | planned | P2 | v1.1 |
 | F-003 | feature | `update` command (agents/skills only) | planned | P2 | v1.1 |
 | F-004 | feature | OpenAI target adapter | planned | P3 | v2.0 |
 | F-005 | feature | Gemini CLI target adapter | planned | P3 | v3.0 |
-| F-006 | feature | Auto-load session files via `@file` imports | planned | P0 | v1.1 |
-| F-007 | feature | Session-start hook in `settings.json.template` | planned | P0 | v1.1 |
+| F-006 | feature | Auto-load session files via `@file` imports | done | P0 | v1.1 |
+| F-007 | feature | Session-start hook in `settings.json.template` | done | P0 | v1.1 |
 | F-008 | feature | OpenSpec: project directory initialisation | planned | P1 | v1.2 |
 | F-009 | feature | OpenSpec: `opsx-propose` skill | planned | P1 | v1.2 |
 | F-010 | feature | OpenSpec: `opsx-explore` skill | planned | P2 | v1.2 |

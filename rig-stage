@@ -31,6 +31,63 @@ Options for install:
 EOF
 }
 
+# ── F-001: CLAUDE.md placeholder substitution ────────────────────────────────
+
+_detect_project_name() {
+  local name=""
+  if [[ -f "pyproject.toml" ]]; then
+    name=$(grep -m1 '^name[[:space:]]*=' pyproject.toml \
+           | sed 's/[^=]*=[[:space:]]*"\(.*\)"/\1/' 2>/dev/null || true)
+  fi
+  if [[ -z "$name" ]] && [[ -f "package.json" ]]; then
+    name=$(grep -m1 '"name"' package.json \
+           | sed 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' 2>/dev/null || true)
+  fi
+  if [[ -z "$name" ]]; then
+    name=$(basename "$(pwd)")
+  fi
+  echo "$name"
+}
+
+_detect_lang_tools() {
+  if [[ -f "pyproject.toml" ]]; then
+    echo "Python + ruff/mypy"
+  elif [[ -f "package.json" ]]; then
+    echo "TypeScript/JS + eslint/tsc"
+  elif [[ -f "CMakeLists.txt" ]] || [[ -f "Makefile" ]]; then
+    echo "C/C++ + clang-tidy"
+  fi
+  # else: empty — placeholder left unchanged so user knows to fill it in
+}
+
+_detect_description() {
+  if [[ -f "README.md" ]]; then
+    awk '/^#[[:space:]]/{found=1; next} found && /[^[:space:]]/{print; exit}' README.md
+  fi
+}
+
+substitute_placeholders() {
+  local dest="$1"
+  local name lang desc
+  name=$(_detect_project_name)
+  lang=$(_detect_lang_tools)
+  desc=$(_detect_description)
+  if [[ -n "$name" ]]; then sed -i "s|<Project Name>|$name|g" "$dest"; fi
+  if [[ -n "$lang" ]]; then sed -i "s|<language and primary tools>|$lang|g" "$dest"; fi
+  if [[ -n "$desc" ]]; then sed -i "s|<what this project does>|$desc|g" "$dest"; fi
+}
+
+_log_substitutions() {
+  local name lang desc
+  name=$(_detect_project_name)
+  lang=$(_detect_lang_tools)
+  desc=$(_detect_description)
+  log "[dry-run] CLAUDE.md placeholder substitutions:"
+  log "[dry-run]   <Project Name>             → ${name:-(unchanged)}"
+  log "[dry-run]   <language and primary tools> → ${lang:-(unchanged)}"
+  log "[dry-run]   <what this project does>   → ${desc:-(unchanged)}"
+}
+
 # ── Commands ──────────────────────────────────────────────────────────────────
 
 cmd_version() { echo "rig-stage $RIG_VERSION"; }
@@ -175,15 +232,17 @@ cmd_install() {
 
     if $dry_run; then
       log "[dry-run] Write config → $dest"
+      if [[ "$(basename "$dest")" == "CLAUDE.md" ]]; then _log_substitutions; fi
       continue
     fi
 
-    [[ "$dest_dir" != "." ]] && mkdir -p "$dest_dir"
+    if [[ "$dest_dir" != "." ]]; then mkdir -p "$dest_dir"; fi
 
     if [[ -f "$dest" ]] && ! $force; then
       skip "$dest (already exists, use --force to overwrite)"
     else
       cp "$src" "$dest"
+      if [[ "$(basename "$dest")" == "CLAUDE.md" ]]; then substitute_placeholders "$dest"; fi
       ok "Config written       → $dest (new)"
     fi
   done

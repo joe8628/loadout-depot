@@ -59,6 +59,18 @@ assert_contains() {
   fi
 }
 
+assert_not_contains() {
+  local description="$1" needle="$2" haystack="$3"
+  if echo "$haystack" | grep -qF "$needle"; then
+    echo "  ✗ $description"
+    echo "    expected NOT to find: $needle"
+    FAIL=$((FAIL + 1))
+  else
+    echo "  ✓ $description"
+    PASS=$((PASS + 1))
+  fi
+}
+
 report() {
   echo ""
   echo "Results: $PASS passed, $FAIL failed"

@@ -214,4 +214,67 @@ assert_contains "new day block appended"  "# Session $today"    "$(cat "$dir/SCR
 assert_contains "old day block preserved" "2000-01-01"          "$(cat "$dir/SCRATCHPAD.md")"
 cleanup "$dir"
 
+# 18. F-001: project name substituted from pyproject.toml
+echo ""
+echo "-- placeholder-project-name-python (F-001) --"
+dir=$(setup_fixture python-project)
+(cd "$dir" && "$RIG_DIR/rig-stage" install --no-codebase-index 2>&1) || true
+assert_contains "project name from pyproject.toml" "test-project" "$(cat "$dir/CLAUDE.md")"
+assert_not_contains "Project Name placeholder gone" "<Project Name>" "$(cat "$dir/CLAUDE.md")"
+cleanup "$dir"
+
+# 19. F-001: language/toolchain substituted for Python project
+echo ""
+echo "-- placeholder-lang-python (F-001) --"
+dir=$(setup_fixture python-project)
+(cd "$dir" && "$RIG_DIR/rig-stage" install --no-codebase-index 2>&1) || true
+assert_contains "Python lang detected" "Python + ruff/mypy" "$(cat "$dir/CLAUDE.md")"
+assert_not_contains "lang placeholder gone" "<language and primary tools>" "$(cat "$dir/CLAUDE.md")"
+cleanup "$dir"
+
+# 20. F-001: language/toolchain substituted for TypeScript project
+echo ""
+echo "-- placeholder-lang-typescript (F-001) --"
+dir=$(setup_fixture typescript-project)
+(cd "$dir" && "$RIG_DIR/rig-stage" install --no-codebase-index 2>&1) || true
+assert_contains "TypeScript lang detected" "TypeScript/JS + eslint/tsc" "$(cat "$dir/CLAUDE.md")"
+cleanup "$dir"
+
+# 21. F-001: language/toolchain substituted for C++ project
+echo ""
+echo "-- placeholder-lang-cpp (F-001) --"
+dir=$(setup_fixture cpp-project)
+(cd "$dir" && "$RIG_DIR/rig-stage" install --no-codebase-index 2>&1) || true
+assert_contains "C/C++ lang detected" "C/C++ + clang-tidy" "$(cat "$dir/CLAUDE.md")"
+cleanup "$dir"
+
+# 22. F-001: description substituted from README.md
+echo ""
+echo "-- placeholder-description-readme (F-001) --"
+dir=$(setup_fixture python-project)
+(cd "$dir" && "$RIG_DIR/rig-stage" install --no-codebase-index 2>&1) || true
+assert_contains "description from README.md" "A test fixture for Rig install tests." "$(cat "$dir/CLAUDE.md")"
+assert_not_contains "description placeholder gone" "<what this project does>" "$(cat "$dir/CLAUDE.md")"
+cleanup "$dir"
+
+# 23. F-001: dry-run logs substitution plan, does not write CLAUDE.md
+echo ""
+echo "-- placeholder-dry-run (F-001) --"
+dir=$(setup_fixture python-project)
+output=$(cd "$dir" && "$RIG_DIR/rig-stage" install --dry-run --no-codebase-index 2>&1)
+assert_contains "dry-run logs project name"   "test-project"   "$output"
+assert_contains "dry-run logs lang tools"     "Python + ruff/mypy" "$output"
+assert_eq "CLAUDE.md not written in dry-run" "missing" "$(test -f "$dir/CLAUDE.md" && echo exists || echo missing)"
+cleanup "$dir"
+
+# 24. F-001: project name falls back to dirname when no manifest present
+echo ""
+echo "-- placeholder-name-fallback (F-001) --"
+dir=$(setup_fixture cpp-project)
+dirname_expected=$(basename "$dir")
+(cd "$dir" && "$RIG_DIR/rig-stage" install --no-codebase-index 2>&1) || true
+# C++ fixture has no package.json/pyproject.toml, so name = dirname
+assert_contains "fallback name is dirname" "$dirname_expected" "$(cat "$dir/CLAUDE.md")"
+cleanup "$dir"
+
 report
