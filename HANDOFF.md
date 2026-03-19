@@ -136,3 +136,41 @@
 - All 81 tests pass — run `bash tests/test_install.sh` to confirm before any changes
 - v1.1 is complete. Next: v1.2 OpenSpec suite, start with F-008 (openspec-init)
 - Health check thresholds are in `targets/claude-code/rig-health-check.sh` lines 108+113 — update when adding agents/skills
+
+---
+
+### Agent: Claude Sonnet 4.6
+**Completed:** 2026-03-19
+**Task:** Skill check system — registry, three-layer validator, smoke test, auto-discovery
+
+#### Output Files
+- `skills/registry.md` — source registry with all 10 skills (triggers, descriptions, smoke test prompts); copied to `.claude/skills/registry.md` on install
+- `targets/claude-code/rig-skill-check.sh` — three-layer validator: presence (registry drift detection), structure (frontmatter + required sections), readability (non-empty + UTF-8)
+- `targets/claude-code/adapter.sh` — added `rig-skill-check.sh` installation in `adapter_post_install`
+- `targets/claude-code/rig-health-check.sh` — replaced skill count check with delegation to `rig-skill-check.sh`; added file/exec checks for `rig-skill-check.sh` and `registry.md`
+- `targets/claude-code/CLAUDE.md.template` — added `@.claude/skills/registry.md` import and `## Skills` section
+- `skill-smoke-test.md` — Claude-side prompt for functional skill verification (run inside Claude Code)
+- `rig-stage` — excluded `registry.md` from skill count and `list` output
+- `tests/test_skill_check.sh` — 19 tests covering all three validation layers
+- `.claude/skills/registry.md` — live copy
+- `.claude/hooks/rig-skill-check.sh` — live copy
+- `.claude/hooks/rig-health-check.sh` — live copy (updated)
+- `CLAUDE.md` — live copy (updated)
+- `SPEC.md` — new §§ 6.3, 6.4 documenting the registry and skill check system; §§ 6.6–6.8 renumbered; § 10.4 test cases; § 14 file format reference updated
+
+#### Assumptions Made
+- `registry.md` lives in `skills/` (co-located with skills) and is excluded from skill count/list — no changes to rig-stage's copy logic needed since `cp skills/*.md` picks it up automatically
+- Unregistered skills (file exists, not in registry) are a warning not a failure — allows gradual onboarding of new skills before registering them
+- `grep -qF "---"` fails on some systems because `---` looks like an option; fixed with `grep -qF -- "---"`
+
+#### What Was Not Done
+- No test for `health-check-delegates` case from spec § 10.4 — the delegation is implicitly tested by the install test suite which runs the full health check
+- `skill-smoke-test.md` is a prompt file only; functional invocation requires Claude Code at runtime and cannot be tested in bash
+
+#### Uncertainties
+- None known
+
+#### Instructions for Next Agent
+- All tests: `bash tests/test_install.sh` (84 passed) + `bash tests/test_skill_check.sh` (19 passed)
+- When adding a new skill: drop `.md` in `skills/`, run `bash .claude/hooks/rig-skill-check.sh` to confirm it's detected as unregistered, then add entry to `skills/registry.md` and copy to `.claude/skills/registry.md`
+- Next milestone: v1.2 OpenSpec suite (F-008–F-016), starting with F-008 (openspec-init) per FEATURES.md

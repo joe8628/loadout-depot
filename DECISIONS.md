@@ -77,3 +77,17 @@
 - **Rationale:** The health check is a diagnostic aid. It should surface problems loudly but never prevent the user from working. Manual re-run is always available: `rm .rig-verified && bash .claude/hooks/rig-health-check.sh`.
 - **Affected files:** `targets/claude-code/session-start.sh`
 - **Date:** 2026-03-19
+
+### Registry co-located with skills in `.claude/skills/`
+- **Decision:** `registry.md` lives in `skills/` (copied to `.claude/skills/registry.md`) rather than a separate top-level file.
+- **Alternatives considered:** `skills/registry.yaml` (machine-readable but not importable into CLAUDE.md), top-level `registry.md` (requires extra copy logic in rig-stage).
+- **Rationale:** Co-location means the existing `cp skills/*.md` install step picks it up automatically. Markdown format allows `@.claude/skills/registry.md` import in CLAUDE.md for auto-discovery. Excluded from skill count and list with `! -name "registry.md"` filter.
+- **Affected files:** `rig-stage`, `targets/claude-code/rig-skill-check.sh`, `targets/claude-code/CLAUDE.md.template`
+- **Date:** 2026-03-19
+
+### Unregistered skills are warnings, not failures
+- **Decision:** A skill file present in `.claude/skills/` but absent from `registry.md` produces a warning and exits 0, not a failure.
+- **Alternatives considered:** Hard failure (exit 1) — too strict, blocks workflows mid-development.
+- **Rationale:** Allows incremental adoption: write the skill file first, verify it structurally, then register it. Only missing registered skills (registered but file absent) are hard failures.
+- **Affected files:** `targets/claude-code/rig-skill-check.sh`, `tests/test_skill_check.sh`
+- **Date:** 2026-03-19
