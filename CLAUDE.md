@@ -44,4 +44,19 @@ The MCP codebase-context tool is available. Use it to explore the codebase:
 - `get_symbol` — exact symbol lookup by name
 - `get_repo_map` — compact file/class/function outline
 
-Prefer these tools over manual file reading when exploring unfamiliar code.
+### Navigation priority — follow this order every time
+
+1. **Repo map first** (`@.codebase-context/repo_map.md` is loaded at session start). Check it before searching anything — it gives a full file/symbol outline at zero cost.
+2. **MCP semantic search** (`search_codebase`, `get_symbol`) — for unfamiliar code or concept-level queries. Only covers languages indexed by ccindex (Python, TypeScript, C, C++).
+3. **`Grep` tool** — for content search in any language, including files not in the index. Use `Grep` (not `bash grep`) for pattern matching across the codebase.
+4. **`Glob` tool** — for finding files by name pattern (e.g. `**/*.sh`, `tests/test_*`). Use `Glob` (not `bash find` or `bash ls`) when you know the filename shape but not the path.
+5. **`Read`** — only after you have located the right file via one of the above. Do not speculatively read files you haven't targeted.
+
+### Grep vs Glob — when to use each
+
+| Tool | Use when | Example |
+|---|---|---|
+| `Glob` | You know the filename pattern | `**/*.sh`, `src/**/*.py` |
+| `Grep` | You know what the code says | `pattern="class Indexer"`, `pattern="def substitute"` |
+
+Never run `bash grep`, `bash find`, or `bash ls` to search the codebase — use the dedicated `Grep` and `Glob` tools instead. They are visible in the tool UI, respect permission settings, and return structured results.

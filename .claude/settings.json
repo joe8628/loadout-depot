@@ -1,4 +1,11 @@
 {
+  "mcpServers": {
+    "codebase-context": {
+      "command": "ccindex",
+      "args": ["serve"],
+      "type": "stdio"
+    }
+  },
   "permissions": {
     "allow": [
       "Read",
