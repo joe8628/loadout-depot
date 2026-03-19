@@ -6,6 +6,21 @@
 
 ---
 
+### 2026-03-19 — Folder-based skill structure
+
+**Decision:** Migrate all skills from flat `skills/<name>.md` to `skills/<name>/SKILL.md` (folder-based).
+
+**Why:** New architecture skills (lich, phylactery-lich, socratic-mvp) ship with companion resource files (`resources/` subdirectories). The flat layout cannot accommodate these without losing the association between a skill and its resources. Folder-based structure makes each skill a self-contained unit — the skill file plus any resources live together.
+
+**Trade-offs accepted:**
+- `rig-stage` install logic now uses `find -name SKILL.md` + per-folder `cp -r` instead of `cp skills/*.md` — slightly more complex but handles nesting.
+- `rig-skill-check.sh` presence check looks for `$SKILLS_DIR/<name>/SKILL.md` — path in registry entries now includes the folder (e.g. `architecture/lich` not `lich.md`).
+- Nested skills (e.g. `architecture/lich`) use slash-delimited names in the registry — consistent with how superpowers uses namespace prefixes.
+
+**Frontmatter:** Accepted both old-style (`version:`, `updated:`) and new-style (`name:`, `category:`) in the structural check — new architecture skills use the new format.
+
+---
+
 ## Decision Log
 
 ### --force does not override HANDOFF.md / DECISIONS.md preservation

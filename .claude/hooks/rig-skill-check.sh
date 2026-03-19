@@ -29,20 +29,20 @@ if [[ ! -f "$REGISTRY" ]]; then
   exit 1
 fi
 
-# Extract registered skill names (## <name> headings, excluding registry itself)
+# Extract registered skill names (## <name> headings)
 registered=()
 while IFS= read -r line; do
   name="${line#\#\# }"
   registered+=("$name")
 done < <(grep "^## " "$REGISTRY")
 
-# Extract installed skill filenames (exclude registry.md itself)
+# Extract installed skill names (folders containing SKILL.md, relative to SKILLS_DIR)
 installed=()
-while IFS= read -r f; do
-  base="$(basename "$f" .md)"
-  [[ "$base" == "registry" ]] && continue
-  installed+=("$base")
-done < <(find "$SKILLS_DIR" -maxdepth 1 -name "*.md" 2>/dev/null | sort)
+while IFS= read -r skill_file; do
+  rel="${skill_file#$SKILLS_DIR/}"
+  rel_dir="$(dirname "$rel")"
+  installed+=("$rel_dir")
+done < <(find "$SKILLS_DIR" -name "SKILL.md" 2>/dev/null | sort)
 
 # Installed but not registered → warning (not a hard failure)
 for skill in "${installed[@]+"${installed[@]}"}"; do
@@ -59,8 +59,8 @@ done
 
 # Registered but missing from disk → fail
 for skill in "${registered[@]+"${registered[@]}"}"; do
-  if [[ ! -f "$SKILLS_DIR/$skill.md" ]]; then
-    fail "$skill.md registered but not found in $SKILLS_DIR"
+  if [[ ! -f "$SKILLS_DIR/$skill/SKILL.md" ]]; then
+    fail "$skill registered but $SKILLS_DIR/$skill/SKILL.md not found"
   fi
 done
 
@@ -69,39 +69,33 @@ echo ""
 echo "-- structure --"
 
 for skill in "${registered[@]+"${registered[@]}"}"; do
-  file="$SKILLS_DIR/$skill.md"
+  file="$SKILLS_DIR/$skill/SKILL.md"
   [[ -f "$file" ]] || continue
 
   if [[ ! -s "$file" ]]; then
-    fail "$skill.md is empty"
+    fail "$skill/SKILL.md is empty"
     continue
   fi
 
   if ! head -1 "$file" | grep -qF -- "---"; then
-    fail "$skill.md missing frontmatter block"
+    fail "$skill/SKILL.md missing frontmatter block"
     continue
   fi
 
   skill_fail=false
 
-  if ! grep -qF "version:" "$file"; then
-    fail "$skill.md frontmatter missing 'version' field"
+  # Accept either old-style (version/updated) or new-style (name) frontmatter
+  has_version=false
+  has_name=false
+  grep -qF "version:" "$file" && has_version=true
+  grep -qF "name:" "$file" && has_name=true
+
+  if ! $has_version && ! $has_name; then
+    fail "$skill/SKILL.md frontmatter missing 'name' or 'version' field"
     skill_fail=true
   fi
 
-  if ! grep -qF "updated:" "$file"; then
-    fail "$skill.md frontmatter missing 'updated' field"
-    skill_fail=true
-  fi
-
-  for section in "## Purpose" "## Trigger" "## Process"; do
-    if ! grep -qF "$section" "$file"; then
-      fail "$skill.md missing '$section' section"
-      skill_fail=true
-    fi
-  done
-
-  $skill_fail || ok "$skill.md valid"
+  $skill_fail || ok "$skill/SKILL.md valid"
 done
 
 # ── Layer 3: Readability check ────────────────────────────────────────────────
@@ -109,22 +103,22 @@ echo ""
 echo "-- readability --"
 
 for skill in "${registered[@]+"${registered[@]}"}"; do
-  file="$SKILLS_DIR/$skill.md"
+  file="$SKILLS_DIR/$skill/SKILL.md"
   [[ -f "$file" ]] || continue
 
   if [[ ! -s "$file" ]]; then
-    fail "$skill.md is empty"
+    fail "$skill/SKILL.md is empty"
     continue
   fi
 
   if command -v file &>/dev/null; then
     if file "$file" | grep -qE "(UTF-8|ASCII|text)"; then
-      ok "$skill.md readable"
+      ok "$skill/SKILL.md readable"
     else
-      fail "$skill.md is not valid UTF-8 text"
+      fail "$skill/SKILL.md is not valid UTF-8 text"
     fi
   else
-    ok "$skill.md readable (file command unavailable, skipped encoding check)"
+    ok "$skill/SKILL.md readable (file command unavailable, skipped encoding check)"
   fi
 done
 

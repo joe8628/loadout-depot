@@ -203,11 +203,19 @@ cmd_update() {
   ok "Agents updated  → $AGENT_INSTALL_PATH ($agent_count files)"
 
   local skill_count=0
-  if compgen -G "$RIG_DIR/skills/*.md" > /dev/null 2>&1; then
-    skill_count=$(find "$RIG_DIR/skills" -name "*.md" ! -name "registry.md" | wc -l | tr -d ' ')
-    cp "$RIG_DIR/skills/"*.md "$SKILL_INSTALL_PATH/"
+  skill_count=$(find "$RIG_DIR/skills" -name "SKILL.md" | wc -l | tr -d ' ')
+  if [[ $skill_count -gt 0 ]]; then
+    # Copy each skill folder preserving structure (exclude resources-only dirs)
+    find "$RIG_DIR/skills" -name "SKILL.md" | while IFS= read -r skill_file; do
+      rel_dir="${skill_file#$RIG_DIR/skills/}"
+      rel_dir="$(dirname "$rel_dir")"
+      mkdir -p "$SKILL_INSTALL_PATH/$rel_dir"
+      cp -r "$(dirname "$skill_file")/." "$SKILL_INSTALL_PATH/$rel_dir/"
+    done
+    # Copy registry (flat file at skills root)
+    [[ -f "$RIG_DIR/skills/registry.md" ]] && cp "$RIG_DIR/skills/registry.md" "$SKILL_INSTALL_PATH/"
   fi
-  ok "Skills updated  → $SKILL_INSTALL_PATH ($skill_count files)"
+  ok "Skills updated  → $SKILL_INSTALL_PATH ($skill_count skills)"
 
   for pair in "${CONFIG_FILES[@]}"; do
     local dest="${pair##*:}"
@@ -230,13 +238,10 @@ cmd_list() {
   done
   echo ""
   echo "Skills:"
-  for f in "$RIG_DIR/skills/"*.md; do
-    [[ -f "$f" ]] || continue
-    local base
-    base="$(basename "$f" .md)"
-    [[ "$base" == "registry" ]] && continue
-    echo "  $base"
-  done
+  while IFS= read -r skill_file; do
+    rel="${skill_file#$RIG_DIR/skills/}"
+    echo "  $(dirname "$rel")"
+  done < <(find "$RIG_DIR/skills" -name "SKILL.md" | sort)
 }
 
 cmd_list_targets() {
@@ -325,18 +330,22 @@ cmd_install() {
     ok "Agents copied       → $AGENT_INSTALL_PATH ($agent_count files)"
   fi
 
-  # Step 5: Copy skills (always overwrite)
+  # Step 5: Copy skills (always overwrite, folder-based structure)
   local skill_count=0
-  if compgen -G "$RIG_DIR/skills/*.md" > /dev/null 2>&1; then
-    skill_count=$(find "$RIG_DIR/skills" -name "*.md" ! -name "registry.md" | wc -l | tr -d ' ')
-  fi
+  skill_count=$(find "$RIG_DIR/skills" -name "SKILL.md" | wc -l | tr -d ' ')
   if $dry_run; then
-    log "[dry-run] Copy skills/ → $SKILL_INSTALL_PATH ($skill_count files)"
+    log "[dry-run] Copy skills/ → $SKILL_INSTALL_PATH ($skill_count skills)"
   else
     if [[ $skill_count -gt 0 ]]; then
-      cp "$RIG_DIR/skills/"*.md "$SKILL_INSTALL_PATH/"
+      find "$RIG_DIR/skills" -name "SKILL.md" | while IFS= read -r skill_file; do
+        rel_dir="${skill_file#$RIG_DIR/skills/}"
+        rel_dir="$(dirname "$rel_dir")"
+        mkdir -p "$SKILL_INSTALL_PATH/$rel_dir"
+        cp -r "$(dirname "$skill_file")/." "$SKILL_INSTALL_PATH/$rel_dir/"
+      done
+      [[ -f "$RIG_DIR/skills/registry.md" ]] && cp "$RIG_DIR/skills/registry.md" "$SKILL_INSTALL_PATH/"
     fi
-    ok "Skills copied        → $SKILL_INSTALL_PATH ($skill_count files)"
+    ok "Skills copied        → $SKILL_INSTALL_PATH ($skill_count skills)"
   fi
 
   # Step 6: Write config templates (skip if exists, unless --force)

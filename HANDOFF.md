@@ -174,3 +174,33 @@
 - All tests: `bash tests/test_install.sh` (84 passed) + `bash tests/test_skill_check.sh` (19 passed)
 - When adding a new skill: drop `.md` in `skills/`, run `bash .claude/hooks/rig-skill-check.sh` to confirm it's detected as unregistered, then add entry to `skills/registry.md` and copy to `.claude/skills/registry.md`
 - Next milestone: v1.2 OpenSpec suite (F-008–F-016), starting with F-008 (openspec-init) per FEATURES.md
+
+---
+
+### Agent: Claude Sonnet 4.6
+**Completed:** 2026-03-19
+**Task:** Skill restructure — folder-based SKILL.md layout + 4 new skills registered
+
+#### Output Files
+- `skills/*/SKILL.md` — 10 existing flat skills migrated to folder structure (`skills/tdd.md` → `skills/tdd/SKILL.md`, etc.)
+- `skills/registry.md` — updated `**File:**` fields to `<name>/SKILL.md` paths; added 4 new skills: `clean-code`, `architecture/lich`, `architecture/phylactery-lich`, `architecture/socratic-mvp`
+- `rig-stage` — `cmd_install` and `cmd_update` now use `find -name SKILL.md` + per-folder `cp -r`; `cmd_list` reads skill folders instead of flat `.md` files
+- `targets/claude-code/rig-skill-check.sh` — rewritten for folder structure: discovers skills via `find -name SKILL.md`, looks for `$SKILLS_DIR/<name>/SKILL.md` on presence check, accepts both old (`version:`) and new (`name:`) frontmatter formats
+- `tests/test_skill_check.sh` — rewritten: `make_valid_skill` creates folder/SKILL.md; new tests for new-format frontmatter, nested skill (architecture/lich), missing-name-and-version; tests now 17 (removed section-level checks that don't apply to new-format skills)
+- `.claude/hooks/rig-skill-check.sh` — live copy updated
+- `.claude/skills/` — live skills synced to folder structure (14 skill folders)
+- `DECISIONS.md` — recorded folder-structure decision
+
+#### Assumptions Made
+- Flat `registry.md` stays at `skills/registry.md` root (not in a folder) — it's config, not a skill
+- `resources/` subdirectories inside architecture skills are copied as-is via `cp -r` of the skill folder
+- Both old-format (`version:`, `updated:`) and new-format (`name:`, `category:`) frontmatter are valid — checker accepts either
+
+#### What Was Not Done
+- SPEC.md §3 (repo structure) not yet updated to reflect folder structure — minor doc gap
+- `rig-health-check.sh` skill count threshold not updated (still ≥10) — 14 skills now installed, threshold still passes
+
+#### Instructions for Next Agent
+- All 84 install tests + 17 skill check tests pass — run both: `bash tests/test_install.sh && bash tests/test_skill_check.sh`
+- When adding a new skill: create `skills/<name>/SKILL.md`, add entry to `skills/registry.md`, re-run check
+- Next: continue OpenSpec suite (F-008–F-016) — resume with F-008 (openspec-init) per FEATURES.md
