@@ -18,9 +18,12 @@ adapter_validate() {
 }
 
 adapter_pre_install() {
-  mkdir -p ".claude"
+  mkdir -p ".claude/hooks"
 }
 
 adapter_post_install() {
-  : # no-op for v1.0
+  cp "$RIG_DIR/targets/claude-code/session-start.sh" ".claude/hooks/session-start.sh"
+  chmod +x ".claude/hooks/session-start.sh"
+  cp "$RIG_DIR/targets/claude-code/session-end.sh" ".claude/hooks/session-end.sh"
+  chmod +x ".claude/hooks/session-end.sh"
 }

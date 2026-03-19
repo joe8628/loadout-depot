@@ -152,9 +152,66 @@ echo ""
 echo "-- fresh-install-creates-session-files --"
 dir=$(setup_fixture python-project)
 (cd "$dir" && "$RIG_DIR/rig-stage" install --no-codebase-index 2>&1) || true
-assert_file_exists "HANDOFF.md created on fresh install"   "$dir/HANDOFF.md"
-assert_file_exists "DECISIONS.md created on fresh install" "$dir/DECISIONS.md"
+assert_file_exists "HANDOFF.md created on fresh install"    "$dir/HANDOFF.md"
+assert_file_exists "DECISIONS.md created on fresh install"  "$dir/DECISIONS.md"
 assert_file_exists "SCRATCHPAD.md created on fresh install" "$dir/SCRATCHPAD.md"
+cleanup "$dir"
+
+# 14. F-006: CLAUDE.md contains @file imports for session files
+echo ""
+echo "-- claude-md-at-file-imports (F-006) --"
+dir=$(setup_fixture python-project)
+(cd "$dir" && "$RIG_DIR/rig-stage" install --no-codebase-index 2>&1) || true
+content=$(cat "$dir/CLAUDE.md")
+assert_contains "@HANDOFF.md import present"     "@HANDOFF.md"     "$content"
+assert_contains "@CONVENTIONS.md import present" "@CONVENTIONS.md" "$content"
+assert_contains "@AGENTS.md import present"      "@AGENTS.md"      "$content"
+cleanup "$dir"
+
+# 15. F-007: session-start and session-end hooks installed and settings.json wired
+echo ""
+echo "-- session-hooks (F-007) --"
+dir=$(setup_fixture python-project)
+(cd "$dir" && "$RIG_DIR/rig-stage" install --no-codebase-index 2>&1) || true
+assert_file_exists "session-start.sh installed"  "$dir/.claude/hooks/session-start.sh"
+assert_file_exists "session-end.sh installed"    "$dir/.claude/hooks/session-end.sh"
+settings=$(cat "$dir/.claude/settings.json")
+assert_contains "settings.json has UserPromptSubmit hook" "UserPromptSubmit"   "$settings"
+assert_contains "settings.json has Stop hook"             "Stop"               "$settings"
+assert_contains "settings.json references session-start"  "session-start.sh"   "$settings"
+assert_contains "settings.json references session-end"    "session-end.sh"     "$settings"
+cleanup "$dir"
+
+# 16. F-007: session-start hook writes dated header to SCRATCHPAD.md
+echo ""
+echo "-- session-start-hook-writes-header (F-007) --"
+dir=$(setup_fixture python-project)
+(cd "$dir" && "$RIG_DIR/rig-stage" install --no-codebase-index 2>&1) || true
+today=$(date +%Y-%m-%d)
+# Run the hook directly (simulates Claude Code firing it)
+(cd "$dir" && bash .claude/hooks/session-start.sh 2>/dev/null) || true
+# Fresh template: hook substitutes <session date> → today in the heading
+assert_contains "SCRATCHPAD.md has today's date" "$today" "$(cat "$dir/SCRATCHPAD.md")"
+# Run again — must be idempotent (date appears exactly once)
+(cd "$dir" && bash .claude/hooks/session-start.sh 2>/dev/null) || true
+count=$(grep -cF "$today" "$dir/SCRATCHPAD.md" || true)
+assert_eq "date written exactly once (idempotent)" "1" "$count"
+cleanup "$dir"
+
+# 17. F-007: hook appends new session block on a new calendar day
+echo ""
+echo "-- session-start-hook-new-day-append (F-007) --"
+dir=$(setup_fixture python-project)
+(cd "$dir" && "$RIG_DIR/rig-stage" install --no-codebase-index 2>&1) || true
+today=$(date +%Y-%m-%d)
+# Run hook once to fill the <session date> placeholder (normal first-run)
+(cd "$dir" && bash .claude/hooks/session-start.sh 2>/dev/null) || true
+# Simulate the scratchpad having been used on a previous day by replacing today's date
+sed -i "s|$today|2000-01-01|g" "$dir/SCRATCHPAD.md"
+# Now run hook — today's date is absent, so it should append a new session block
+(cd "$dir" && bash .claude/hooks/session-start.sh 2>/dev/null) || true
+assert_contains "new day block appended"  "# Session $today"    "$(cat "$dir/SCRATCHPAD.md")"
+assert_contains "old day block preserved" "2000-01-01"          "$(cat "$dir/SCRATCHPAD.md")"
 cleanup "$dir"
 
 report
