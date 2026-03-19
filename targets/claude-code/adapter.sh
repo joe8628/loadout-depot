@@ -28,6 +28,8 @@ adapter_post_install() {
   chmod +x ".claude/hooks/session-end.sh"
   cp "$RIG_DIR/targets/claude-code/rig-health-check.sh" ".claude/hooks/rig-health-check.sh"
   chmod +x ".claude/hooks/rig-health-check.sh"
+  cp "$RIG_DIR/targets/claude-code/rig-skill-check.sh"  ".claude/hooks/rig-skill-check.sh"
+  chmod +x ".claude/hooks/rig-skill-check.sh"
   # Clear the verified marker so the health check runs on the next session start
   rm -f ".rig-verified"
 }
