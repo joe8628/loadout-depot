@@ -7,6 +7,39 @@
 
 ---
 
+### Agent: Claude Sonnet 4.6
+**Completed:** 2026-03-20
+**Task:** Add prompt-master skill, redesign README.md, defer OpenSpec (F-008–F-016) to v1.3
+
+#### Output Files
+- `skills/prompt-master/SKILL.md` — new skill: prompt engineering for 20+ AI tools
+- `skills/prompt-master/references/templates.md` — 12 prompt templates (RTF, CO-STAR, RISEN, etc.)
+- `skills/prompt-master/references/patterns.md` — 35 anti-patterns diagnostic reference
+- `.claude/skills/prompt-master/` — live copies of the above
+- `skills/registry.md` + `.claude/skills/registry.md` — added prompt-master entry
+- `README.md` — redesigned with centered banner image, shields.io badges, Quick Start section
+- `docs/superpowers/plans/2026-03-19-openspec-skills.md` — rewritten as research/deferred document with 3 integration options and 7 open questions
+- `FEATURES.md` — F-008–F-011 rewritten with correct scope (thin wrapper, not hand-written skills); F-012–F-016 retired as superseded by OpenSpec CLI
+
+#### Assumptions Made
+- prompt-master skill wraps the nidhinjs/prompt-master content into loadout-depot folder format with required frontmatter
+- OpenSpec CLI (`@fission-ai/openspec`) auto-generates all skills via `openspec init --tools claude` — hand-writing them is wrong
+- F-012–F-016 (individual opsx skill stubs) are retired entirely; they map to OpenSpec-generated skills
+
+#### What Was Not Done
+- OpenSpec integration (F-008–F-011) deferred to v1.3 pending resolution of 7 open questions
+- No new tests written this session (prompt-master is runtime-only, no bash testable behavior)
+
+#### Uncertainties
+- 7 open questions documented in `docs/superpowers/plans/2026-03-19-openspec-skills.md` must be resolved before v1.3 sprint
+
+#### Instructions for Next Agent
+- Run `bash tests/test_install.sh && bash tests/test_skill_check.sh` before any changes (84 + 17 tests)
+- Next milestone is v1.3: resolve 7 open questions in OpenSpec plan doc, then implement F-008–F-011
+- prompt-master skill follows loadout-depot format — if upgrading from upstream (nidhinjs/prompt-master), preserve the frontmatter and folder structure
+
+---
+
 ## Block Template (copy and fill per agent)
 
 ### Agent: <agent name>
