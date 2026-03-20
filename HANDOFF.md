@@ -35,7 +35,7 @@
 **Task:** Implement B-001, F-006, F-007 — session file preservation, @file imports, session hooks
 
 #### Output Files
-- `rig-stage` — step 7 rewritten: SCRATCHPAD.md always overwrites, HANDOFF.md + DECISIONS.md skip-if-exists (even under --force)
+- `loadout-depot` — step 7 rewritten: SCRATCHPAD.md always overwrites, HANDOFF.md + DECISIONS.md skip-if-exists (even under --force)
 - `targets/claude-code/CLAUDE.md.template` — added `@HANDOFF.md`, `@CONVENTIONS.md`, `@AGENTS.md` imports after repo map line
 - `targets/claude-code/settings.json.template` — added `UserPromptSubmit` and `Stop` hooks
 - `targets/claude-code/session-start.sh` — new: git pull + dated SCRATCHPAD header (idempotent, sed-substitutes fresh template)
@@ -62,7 +62,7 @@
 
 #### Instructions for Next Agent
 - Read FEATURES.md — start with F-001 (auto-populate CLAUDE.md placeholders), then F-002/F-003
-- All 46 tests in `tests/test_install.sh` must continue to pass after any changes to `rig-stage` or adapter files
+- All 46 tests in `tests/test_install.sh` must continue to pass after any changes to `loadout-depot` or adapter files
 - The B-001 fix (HANDOFF.md/DECISIONS.md preservation) is now an invariant — do not regress it
 - Commit F-006/F-007 work before starting F-001 (user approved, pending commit)
 
@@ -73,7 +73,7 @@
 **Task:** F-001, F-002, F-003, MCP wiring, navigation rules, session protocol enforcement
 
 #### Output Files
-- `rig-stage` — added `substitute_placeholders()` (F-001), `cmd_list_targets()` (F-002), `cmd_update()` (F-003); fixed `cmd_upgrade` to call `update` not `install --force`; updated `usage()`; fixed `set -e` bug in `&&` patterns
+- `loadout-depot` — added `substitute_placeholders()` (F-001), `cmd_list_targets()` (F-002), `cmd_update()` (F-003); fixed `cmd_upgrade` to call `update` not `install --force`; updated `usage()`; fixed `set -e` bug in `&&` patterns
 - `tests/test_install.sh` — 25 new tests (71 total); covers F-001 placeholder substitution, F-002 list-targets, F-003 update/preserve
 - `tests/lib.sh` — added `assert_not_contains` helper
 - `tests/fixtures/python-project/README.md` — new fixture for F-001 description detection
@@ -108,34 +108,34 @@
 
 ### Agent: Claude Sonnet 4.6
 **Completed:** 2026-03-19
-**Task:** F-007 health check system — rig-health-check.sh, tests, recursion guard
+**Task:** F-007 health check system — loadout-depot-health-check.sh, tests, recursion guard
 
 #### Output Files
-- `targets/claude-code/rig-health-check.sh` — new: 31-check post-install health check; writes `.rig-verified` on full pass; exits 1 on any failure
-- `targets/claude-code/session-start.sh` — added step 0: run health check when `.rig-verified` absent (with `RIG_HEALTH_CHECK_ACTIVE` guard)
-- `targets/claude-code/adapter.sh` — `adapter_post_install` now installs `rig-health-check.sh` and clears `.rig-verified`
-- `rig-stage` — `cmd_update` explicitly clears `.rig-verified` after adapter_post_install
+- `targets/claude-code/loadout-depot-health-check.sh` — new: 31-check post-install health check; writes `.loadout-depot-verified` on full pass; exits 1 on any failure
+- `targets/claude-code/session-start.sh` — added step 0: run health check when `.loadout-depot-verified` absent (with `RIG_HEALTH_CHECK_ACTIVE` guard)
+- `targets/claude-code/adapter.sh` — `adapter_post_install` now installs `loadout-depot-health-check.sh` and clears `.loadout-depot-verified`
+- `loadout-depot` — `cmd_update` explicitly clears `.loadout-depot-verified` after adapter_post_install
 - `tests/lib.sh` — added `assert_not_file_exists` helper
 - `tests/test_install.sh` — 10 new tests for F-007 health check (81 total, all passing)
-- `.claude/hooks/rig-health-check.sh` — live copy updated
+- `.claude/hooks/loadout-depot-health-check.sh` — live copy updated
 - `.claude/hooks/session-start.sh` — live copy updated
 
 #### Assumptions Made
 - Health check should be advisory-only from session-start.sh (`|| true`) — a failing check should not block the user's work
 - Recursion guard via env var (`RIG_HEALTH_CHECK_ACTIVE=1`) is the simplest safe fix; no marker file needed
-- Agent count threshold ≥9 and skill count ≥10 are hardcoded to match current Rig v1.1 — must be updated if agents/skills are added
+- Agent count threshold ≥9 and skill count ≥10 are hardcoded to match current Loadout Depot v1.1 — must be updated if agents/skills are added
 
 #### What Was Not Done
 - F-008–F-016 (OpenSpec suite) — v1.2, not started
 - Health check does not test `session-end.sh` behaviour (Stop hook output only visible in Claude UI, untestable in bash)
 
 #### Uncertainties
-- Health check thresholds (≥9 agents, ≥10 skills) will need bumping when new agents/skills are added to Rig
+- Health check thresholds (≥9 agents, ≥10 skills) will need bumping when new agents/skills are added to Loadout Depot
 
 #### Instructions for Next Agent
 - All 81 tests pass — run `bash tests/test_install.sh` to confirm before any changes
 - v1.1 is complete. Next: v1.2 OpenSpec suite, start with F-008 (openspec-init)
-- Health check thresholds are in `targets/claude-code/rig-health-check.sh` lines 108+113 — update when adding agents/skills
+- Health check thresholds are in `targets/claude-code/loadout-depot-health-check.sh` lines 108+113 — update when adding agents/skills
 
 ---
 
@@ -145,21 +145,21 @@
 
 #### Output Files
 - `skills/registry.md` — source registry with all 10 skills (triggers, descriptions, smoke test prompts); copied to `.claude/skills/registry.md` on install
-- `targets/claude-code/rig-skill-check.sh` — three-layer validator: presence (registry drift detection), structure (frontmatter + required sections), readability (non-empty + UTF-8)
-- `targets/claude-code/adapter.sh` — added `rig-skill-check.sh` installation in `adapter_post_install`
-- `targets/claude-code/rig-health-check.sh` — replaced skill count check with delegation to `rig-skill-check.sh`; added file/exec checks for `rig-skill-check.sh` and `registry.md`
+- `targets/claude-code/loadout-depot-skill-check.sh` — three-layer validator: presence (registry drift detection), structure (frontmatter + required sections), readability (non-empty + UTF-8)
+- `targets/claude-code/adapter.sh` — added `loadout-depot-skill-check.sh` installation in `adapter_post_install`
+- `targets/claude-code/loadout-depot-health-check.sh` — replaced skill count check with delegation to `loadout-depot-skill-check.sh`; added file/exec checks for `loadout-depot-skill-check.sh` and `registry.md`
 - `targets/claude-code/CLAUDE.md.template` — added `@.claude/skills/registry.md` import and `## Skills` section
 - `skill-smoke-test.md` — Claude-side prompt for functional skill verification (run inside Claude Code)
-- `rig-stage` — excluded `registry.md` from skill count and `list` output
+- `loadout-depot` — excluded `registry.md` from skill count and `list` output
 - `tests/test_skill_check.sh` — 19 tests covering all three validation layers
 - `.claude/skills/registry.md` — live copy
-- `.claude/hooks/rig-skill-check.sh` — live copy
-- `.claude/hooks/rig-health-check.sh` — live copy (updated)
+- `.claude/hooks/loadout-depot-skill-check.sh` — live copy
+- `.claude/hooks/loadout-depot-health-check.sh` — live copy (updated)
 - `CLAUDE.md` — live copy (updated)
 - `SPEC.md` — new §§ 6.3, 6.4 documenting the registry and skill check system; §§ 6.6–6.8 renumbered; § 10.4 test cases; § 14 file format reference updated
 
 #### Assumptions Made
-- `registry.md` lives in `skills/` (co-located with skills) and is excluded from skill count/list — no changes to rig-stage's copy logic needed since `cp skills/*.md` picks it up automatically
+- `registry.md` lives in `skills/` (co-located with skills) and is excluded from skill count/list — no changes to loadout-depot's copy logic needed since `cp skills/*.md` picks it up automatically
 - Unregistered skills (file exists, not in registry) are a warning not a failure — allows gradual onboarding of new skills before registering them
 - `grep -qF "---"` fails on some systems because `---` looks like an option; fixed with `grep -qF -- "---"`
 
@@ -172,7 +172,7 @@
 
 #### Instructions for Next Agent
 - All tests: `bash tests/test_install.sh` (84 passed) + `bash tests/test_skill_check.sh` (19 passed)
-- When adding a new skill: drop `.md` in `skills/`, run `bash .claude/hooks/rig-skill-check.sh` to confirm it's detected as unregistered, then add entry to `skills/registry.md` and copy to `.claude/skills/registry.md`
+- When adding a new skill: drop `.md` in `skills/`, run `bash .claude/hooks/loadout-depot-skill-check.sh` to confirm it's detected as unregistered, then add entry to `skills/registry.md` and copy to `.claude/skills/registry.md`
 - Next milestone: v1.2 OpenSpec suite (F-008–F-016), starting with F-008 (openspec-init) per FEATURES.md
 
 ---
@@ -184,10 +184,10 @@
 #### Output Files
 - `skills/*/SKILL.md` — 10 existing flat skills migrated to folder structure (`skills/tdd.md` → `skills/tdd/SKILL.md`, etc.)
 - `skills/registry.md` — updated `**File:**` fields to `<name>/SKILL.md` paths; added 4 new skills: `clean-code`, `architecture/lich`, `architecture/phylactery-lich`, `architecture/socratic-mvp`
-- `rig-stage` — `cmd_install` and `cmd_update` now use `find -name SKILL.md` + per-folder `cp -r`; `cmd_list` reads skill folders instead of flat `.md` files
-- `targets/claude-code/rig-skill-check.sh` — rewritten for folder structure: discovers skills via `find -name SKILL.md`, looks for `$SKILLS_DIR/<name>/SKILL.md` on presence check, accepts both old (`version:`) and new (`name:`) frontmatter formats
+- `loadout-depot` — `cmd_install` and `cmd_update` now use `find -name SKILL.md` + per-folder `cp -r`; `cmd_list` reads skill folders instead of flat `.md` files
+- `targets/claude-code/loadout-depot-skill-check.sh` — rewritten for folder structure: discovers skills via `find -name SKILL.md`, looks for `$SKILLS_DIR/<name>/SKILL.md` on presence check, accepts both old (`version:`) and new (`name:`) frontmatter formats
 - `tests/test_skill_check.sh` — rewritten: `make_valid_skill` creates folder/SKILL.md; new tests for new-format frontmatter, nested skill (architecture/lich), missing-name-and-version; tests now 17 (removed section-level checks that don't apply to new-format skills)
-- `.claude/hooks/rig-skill-check.sh` — live copy updated
+- `.claude/hooks/loadout-depot-skill-check.sh` — live copy updated
 - `.claude/skills/` — live skills synced to folder structure (14 skill folders)
 - `DECISIONS.md` — recorded folder-structure decision
 
@@ -198,9 +198,57 @@
 
 #### What Was Not Done
 - SPEC.md §3 (repo structure) not yet updated to reflect folder structure — minor doc gap
-- `rig-health-check.sh` skill count threshold not updated (still ≥10) — 14 skills now installed, threshold still passes
+- `loadout-depot-health-check.sh` skill count threshold not updated (still ≥10) — 14 skills now installed, threshold still passes
 
 #### Instructions for Next Agent
 - All 84 install tests + 17 skill check tests pass — run both: `bash tests/test_install.sh && bash tests/test_skill_check.sh`
 - When adding a new skill: create `skills/<name>/SKILL.md`, add entry to `skills/registry.md`, re-run check
 - Next: continue OpenSpec suite (F-008–F-016) — resume with F-008 (openspec-init) per FEATURES.md
+
+---
+
+### Agent: Claude Sonnet 4.6
+**Completed:** 2026-03-19
+**Task:** Unified skill format standard, relationship model, 4-layer validator, rename rig→loadout-depot
+
+#### Output Files
+- `skills/SKILL.template.md` — canonical skill template with frontmatter reference section
+- `skills/base/clean-code/SKILL.md` — moved from `skills/clean-code/`, reformatted to standard
+- `skills/*/SKILL.md` (all 14 skills) — added `skill_type`, `hierarchy_level`, `parent_skills`, `uses_skills` to all frontmatter
+- `skills/architecture/lich/SKILL.md` — `uses_skills: [base/clean-code, adr, tdd]`
+- `skills/architecture/phylactery-lich/SKILL.md` — `hierarchy_level: 1`, `parent_skills: [architecture/lich]`, `uses_skills: [base/clean-code, adr, tdd, linting, type-checking, dependency-audit]`
+- `skills/architecture/socratic-mvp/SKILL.md` — `hierarchy_level: 1`, `parent_skills: [architecture/lich, architecture/phylactery-lich]`
+- `skills/changelog/SKILL.md` — `uses_skills: [commit-msg]`
+- `skills/registry.md` + `.claude/skills/registry.md` — `clean-code` → `base/clean-code` entry updated
+- `targets/claude-code/loadout-depot-skill-check.sh` — 4-layer validator (presence, structure, references, readability); requires 5 frontmatter fields; `parent_skills` missing = FAIL, `uses_skills` missing = WARN
+- `loadout-depot` (was `rig-stage`) — full rename; env vars, marker files, log prefixes updated
+- `targets/claude-code/adapter.sh` — all rig→loadout-depot references
+- `targets/claude-code/loadout-depot-health-check.sh` (was `rig-health-check.sh`) — recursion guard renamed
+- `targets/claude-code/session-start.sh` + `.claude/hooks/session-start.sh` — marker + guard renamed
+- `.gitignore`, `Makefile`, `hooks/pre-commit` — all references updated
+- All 73 `.md` files — `Rig`→`Loadout Depot`, `rig-stage`→`loadout-depot` throughout
+- `CLAUDE.md` + `targets/claude-code/CLAUDE.md.template` — `rig-skill-check.sh` → `loadout-depot-skill-check.sh`
+- `tests/test_install.sh` — all internal references renamed; 2 hardcoded expected strings updated
+- `tests/test_skill_check.sh` — completely rewritten: `make_valid_skill` now includes all 5 required fields; removed old-format test; test 3 repurposed to `uses_skills` reference; test 7 updated to `missing-version`
+- `DECISIONS.md` — 3 new entries: unified standard, relationship model, rename
+
+#### Assumptions Made
+- `base/clean-code` is the canonical namespace for the clean-code standard (matches architecture skill body references)
+- `uses_skills` resolution failures are warnings, not errors — allows forward-references to planned skills
+- `parent_skills` resolution failures are errors — a child referencing a non-existent parent is a structural defect
+- Old `name:`/`category:` frontmatter format is now fully invalid — only `version:` format is accepted
+- Rename used ordered sed (longest patterns first) to avoid partial matches
+
+#### What Was Not Done
+- New missing skills (`commit-msg-linting`, `test-runner`, `style-guide`) not created — user has a separate skill creator
+- SPEC.md §3 repo structure diagram not updated for `base/` subdirectory or rename
+- `loadout-depot-health-check.sh` skill count threshold (≥10) not bumped — 14 installed, still passes
+
+#### Uncertainties
+- None known — 84 install tests + 17 skill check tests all pass
+
+#### Instructions for Next Agent
+- Run `bash tests/test_install.sh && bash tests/test_skill_check.sh` before any changes (84 + 17 = 101 tests, all passing)
+- When adding a skill: create `skills/<name>/SKILL.md` with all 5 frontmatter fields, add registry entry, re-run skill check
+- Next milestone: v1.2 OpenSpec suite (F-008–F-016), start with F-008 (openspec-init) per FEATURES.md
+- `base/clean-code` skill is now separate from the architecture skills it serves — if it gains parent skills in future, update `parent_skills` only (not `uses_skills`)
