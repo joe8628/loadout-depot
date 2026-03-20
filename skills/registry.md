@@ -1,7 +1,7 @@
 # Skills Registry
 
 <!-- @imported in CLAUDE.md for auto-discovery -->
-<!-- rig-skill-check.sh reads this to detect unregistered or missing skills -->
+<!-- loadout-depot-skill-check.sh reads this to detect unregistered or missing skills -->
 <!-- Format: one ## <name> block per skill. Name must match the folder path relative to skills/. -->
 
 ## tdd
@@ -64,8 +64,8 @@
 **Description:** Guide environment setup for the detected project language and toolchain
 **Smoke test:** `Run env setup for the current project`
 
-## clean-code
-**File:** clean-code/SKILL.md
+## base/clean-code
+**File:** base/clean-code/SKILL.md
 **Triggers:** "clean code", "type safety", "remove any types", "import hygiene", "sanitization pass", during any code execution or verification phase
 **Description:** Enforce zero-Any policy, import hygiene, and CSS architecture standards
 **Smoke test:** `Run a sanitization pass on the current file for any types and unused imports`
@@ -87,3 +87,9 @@
 **Triggers:** "define MVP", "socratic questions", "what are we building", "scope the MVP", at the start of any MVP or domain modeling session
 **Description:** Socratic dialogue methodology for MVP discovery, domain validation, and scope definition
 **Smoke test:** `Use socratic-mvp to define the MVP for a task management app`
+
+## prompt-master
+**File:** prompt-master/SKILL.md
+**Triggers:** "write me a prompt", "help me prompt", "optimize this prompt", "I'm getting bad results from X", "fix my prompt", "prompt for Claude/ChatGPT/Cursor/Midjourney"
+**Description:** Generate a single production-ready prompt for any AI tool — optimized for the target system, zero wasted tokens, ready to paste on the first attempt
+**Smoke test:** `Write me a prompt for Claude to summarize a legal contract in plain English`

@@ -1,63 +1,81 @@
-# Rig
+<div align="center">
+  <img src="loadout-depot.png" alt="Loadout Depot" width="600"/>
 
-CLI scaffold that bootstraps any project with Claude Code agents, skills, session
-templates, config files, and a codebase context index in a single command.
+  <h1>Loadout Depot</h1>
+  <p>Bootstrap any project with Claude Code agents, skills, session templates, and a codebase context index — in a single command.</p>
+
+  ![Version](https://img.shields.io/badge/version-1.1.0-blue)
+  ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-lightgrey)
+  ![Shell](https://img.shields.io/badge/shell-bash%205%2B-green)
+  ![License](https://img.shields.io/github/license/joe8628/loadout-depot)
+</div>
+
+---
 
 ## Install
 
-### One-liner (recommended)
+**One-liner (recommended)**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/joe8628/Rig/main/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/joe8628/loadout-depot/main/bootstrap.sh | bash
 ```
 
-This clones the repo to `~/.rig` and symlinks `rig-stage` into `~/.local/bin`.
-Re-running it updates Rig to the latest version.
+Clones the repo to `~/.rig` and symlinks `loadout-depot` into `~/.local/bin`. Re-running updates to the latest version.
 
-### Manual
+**Manual**
 
 ```bash
-git clone https://github.com/joe8628/Rig.git ~/.rig
+git clone https://github.com/joe8628/loadout-depot.git ~/.rig
 cd ~/.rig && make install
 ```
 
-### PATH
+**PATH**
 
-Make sure `~/.local/bin` is on your PATH. If not, add this to your `~/.bashrc` or `~/.zshrc`:
+Make sure `~/.local/bin` is on your PATH:
 
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-### Use from any project
+Add that line to your `~/.bashrc` or `~/.zshrc`.
+
+---
+
+## Quick Start
 
 ```bash
 cd ~/my-project
-rig-stage install
+loadout-depot install
 ```
+
+---
 
 ## Usage
 
 ```bash
-./rig-stage install                        # Install for Claude Code (default)
-./rig-stage install --target claude-code   # Explicit target
-./rig-stage install --force                # Overwrite existing config files
-./rig-stage install --dry-run              # Preview without writing files
-./rig-stage install --no-hooks             # Skip pre-commit hook
-./rig-stage install --no-codebase-index    # Skip ccindex init
+loadout-depot install                        # Install for Claude Code (default)
+loadout-depot install --target claude-code   # Explicit target
+loadout-depot install --force                # Overwrite existing config files
+loadout-depot install --dry-run              # Preview without writing files
+loadout-depot install --no-hooks             # Skip pre-commit hook
+loadout-depot install --no-codebase-index    # Skip ccindex init
 
-./rig-stage list      # List available agents and skills
-./rig-stage version   # Print Rig version
-./rig-stage help      # Print usage
+loadout-depot list      # List available agents and skills
+loadout-depot version   # Print version
+loadout-depot help      # Print usage
 ```
+
+---
 
 ## Requirements
 
-- bash 5+
-- git
-- `claude` CLI (for Claude Code target)
-- `ccindex` (for codebase context indexing — from the bundled `codebase-context/` submodule)
+- `bash` 5+
+- `git`
+- `claude` CLI — required for the Claude Code target
+- `ccindex` — bundled via the `codebase-context/` submodule
+
+---
 
 ## Documentation
 
-See `SPEC.md` for full specification.
+Full specification: [`SPEC.md`](SPEC.md)
