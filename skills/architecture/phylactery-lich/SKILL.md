@@ -1,17 +1,41 @@
 ---
-name: phylactery-lich
-category: architecture
-hierarchy_level: 1
+version: 1.0.0
+updated: 2026-03-19
+changelog:
+  - 1.0.0: initial version
 skill_type: architecture
+hierarchy_level: 1
 parent_skills:
   - architecture/lich
-child_skills: []
-priority: critical
-applies_to:
-  - skullrender-projects
-  - phylactery
-  - angular-python-stack
-tags: [architecture, skullrender, phylactery, bones-brain, clean-architecture]
+uses_skills:
+  - base/clean-code
+  - adr
+  - tdd
+  - linting
+  - type-checking
+  - dependency-audit
+---
+
+# architecture/phylactery-lich
+
+## Purpose
+
+SkullRender-specific architecture orchestrator — extends architecture/lich with Angular 19 + FastAPI stack enforcement, 15-output deliverable set, and the "huesos primero" methodology.
+
+## Trigger
+
+- Any architecture session on a SkullRender project (Angular + Python stack)
+- User references "phylactery", "SkullRender design", or "bones first"
+- Overrides architecture/lich when both would apply (hierarchy_level 1 wins over 2)
+
+## Language Support
+
+Language-agnostic at the architecture level. Enforces Angular 19 (TypeScript) and FastAPI (Python) at the implementation level.
+
+## Process
+
+Follow the four-phase SkullRender Lifecycle below: Huesos (Bones) → Cerebro (Brain) → Piel (Skin) → Pulido (Polish).
+
 ---
 
 # The Phylactery Lich - SkullRender Architect

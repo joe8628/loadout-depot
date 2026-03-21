@@ -1,4 +1,4 @@
-# Rig — Project Specification
+# Loadout Depot — Project Specification
 
 **Version:** 1.0.0
 **Status:** Draft
@@ -8,11 +8,11 @@
 
 ## 1. Overview
 
-Rig is a CLI tool and scaffold repository. Running `rig-stage install` in any project root copies a predefined set of AI agent prompts, skill prompts, session templates, config files, and git hooks into the correct locations for the target LLM tool. It then invokes the context manager installer.
+Loadout Depot is a CLI tool and scaffold repository. Running `payload-depot install` in any project root copies a predefined set of AI agent prompts, skill prompts, session templates, config files, and git hooks into the correct locations for the target LLM tool. It then invokes the context manager installer.
 
 The system has two layers:
 
-- **Canonical content layer** — agent and skill `.md` files that are LLM-agnostic and live once in the Rig repo
+- **Canonical content layer** — agent and skill `.md` files that are LLM-agnostic and live once in the Loadout Depot repo
 - **Target adapter layer** — per-tool wiring that maps canonical content to the right install paths, config formats, and invocation conventions
 
 This spec covers the v1.0 Claude Code target. Future targets (OpenAI, Gemini) follow the same adapter contract defined in Section 7.
@@ -21,13 +21,13 @@ This spec covers the v1.0 Claude Code target. Future targets (OpenAI, Gemini) fo
 
 ## 2. Constraints and Assumptions
 
-- Rig is a developer tool. The user is a technical operator running it from a terminal.
+- Loadout Depot is a developer tool. The user is a technical operator running it from a terminal.
 - The `rig` entrypoint is a single bash script for v1.0. No runtime dependencies beyond bash, git, and standard Unix utilities (`cp`, `chmod`, `mkdir`, `cat`).
-- The target project must have a git repository initialised (`.git/` must exist) before running `rig-stage install`.
-- Context manager is a pre-existing external component. Rig invokes it but does not own it.
+- The target project must have a git repository initialised (`.git/` must exist) before running `payload-depot install`.
+- Context manager is a pre-existing external component. Loadout Depot invokes it but does not own it.
 - All agent and skill files are UTF-8 plain text markdown.
 - v1.0 supports Python, TypeScript, and C/C++ projects.
-- Rig does not require network access to install.
+- Loadout Depot does not require network access to install.
 
 ---
 
@@ -58,6 +58,8 @@ rig/
 │   ├── commit-msg.md
 │   └── env-setup.md
 │
+├── skill-smoke-test.md              ← prompt for functional skill verification (run inside Claude Code)
+│
 ├── targets/
 │   ├── claude-code/                 ← v1.0 default target
 │   │   ├── adapter.sh               ← target-specific install logic
@@ -65,6 +67,7 @@ rig/
 │   │   ├── CONVENTIONS.md.template
 │   │   ├── AGENTS.md.template
 │   │   ├── settings.json.template
+│   │   ├── payload-depot-skill-check.sh       ← structural + registry skill validator
 │   │   └── README.md
 │   ├── openai/                      ← v2.0 stub
 │   │   └── README.md
@@ -99,7 +102,7 @@ rig/
 
 ### 4.1 Entrypoint
 
-`rig` is a bash script located at the repo root, made executable with `chmod +x`. It is designed to be invoked from the target project root, with the path to the Rig repo either in `$PATH` or referenced directly.
+`rig` is a bash script located at the repo root, made executable with `chmod +x`. It is designed to be invoked from the target project root, with the path to the Loadout Depot repo either in `$PATH` or referenced directly.
 
 ```bash
 # Invocation patterns
@@ -108,12 +111,12 @@ rig <command> [options]
 
 ### 4.2 Commands
 
-#### `rig-stage install`
+#### `payload-depot install`
 
 Bootstraps the current working directory as an AI-assisted project.
 
 ```
-rig-stage install [--target <name>] [--force] [--dry-run] [--no-hooks] [--no-context-manager]
+payload-depot install [--target <name>] [--force] [--dry-run] [--no-hooks] [--no-context-manager]
 ```
 
 | Flag | Default | Description |
@@ -124,15 +127,15 @@ rig-stage install [--target <name>] [--force] [--dry-run] [--no-hooks] [--no-con
 | `--no-hooks` | false | Skip git hook installation |
 | `--no-codebase-index` | false | Skip codebase context index initialisation (`ccindex init`) |
 
-#### `rig-stage list`
+#### `payload-depot list`
 
 Prints all available agents and skills with their descriptions. No flags.
 
-#### `rig-stage version`
+#### `payload-depot version`
 
-Prints the current Rig version.
+Prints the current Loadout Depot version.
 
-#### `rig-stage help`
+#### `payload-depot help`
 
 Prints usage information.
 
@@ -176,7 +179,7 @@ Skipped files are reported as:
 
 ### 5.1 Pre-flight Checks
 
-Before any file operations, `rig-stage install` validates:
+Before any file operations, `payload-depot install` validates:
 
 1. Current directory contains a `.git/` folder — abort with exit code 2 if not
 2. Target adapter exists under `targets/<name>/` — abort with exit code 3 if not
@@ -212,7 +215,7 @@ Steps execute in order. Failure in any step (except context manager) halts execu
 | `settings.json` | Skip if exists | Overwrite |
 | Session templates | Always overwrite | Always overwrite |
 
-Rationale: agent and skill files are versioned prompt content owned by Rig. Config files are user-customised per project and must not be clobbered silently.
+Rationale: agent and skill files are versioned prompt content owned by Loadout Depot. Config files are user-customised per project and must not be clobbered silently.
 
 ---
 
@@ -298,7 +301,145 @@ What to do when the tool is not installed, the check fails, or the output
 is ambiguous.
 ```
 
-### 6.3 Session Templates
+### 6.3 Skills Registry
+
+**File:** `.claude/skills/registry.md` (installed alongside skill files; excluded from skill count and structural validation)
+
+**Purpose:** Single source of truth for all installed skills. Serves three roles simultaneously:
+1. **Auto-discovery** — `@imported` in `CLAUDE.md` so Claude sees all skill triggers at session start without explicit naming
+2. **Drift detection** — `payload-depot-skill-check.sh` diffs the filesystem against this file to detect unregistered or missing skills
+3. **Smoke test index** — each entry carries a minimal test prompt used by `skill-smoke-test.md`
+
+**Format:**
+
+```markdown
+# Skills Registry
+
+<!-- @imported in CLAUDE.md for auto-discovery -->
+<!-- payload-depot-skill-check.sh reads this to detect unregistered or missing skills -->
+
+## tdd
+**File:** tdd.md
+**Triggers:** "use TDD", "write tests first", before implementing any feature or bugfix
+**Description:** Guide test-driven development: red → green → refactor
+**Smoke test:** `Use TDD to write a function that returns the sum of two numbers`
+
+## linting
+**File:** linting.md
+**Triggers:** "lint", "check style", before committing, after writing code
+**Description:** Run linter for the detected project language
+**Smoke test:** `Run linting on the current project and report any violations`
+
+## type-checking
+**File:** type-checking.md
+**Triggers:** "type check", "run mypy", "run tsc", before committing
+**Description:** Run static type checker for the detected project language
+**Smoke test:** `Run type checking on the current project and report errors`
+```
+
+**Parsing contract for `payload-depot-skill-check.sh`:**
+- Registered skill names are extracted with: `grep "^## " .claude/skills/registry.md | sed 's/## //'`
+- Each name must match a file: `.claude/skills/<name>.md`
+
+**CLAUDE.md.template addition:**
+
+```markdown
+@.claude/skills/registry.md
+
+## Skills
+
+Project skills live in `.claude/skills/`. The registry above lists all available
+skills and their triggers — Claude loads them automatically when a matching trigger
+appears in the conversation.
+
+To add a skill:
+1. Drop `<skill-name>.md` in `.claude/skills/` following the skill file structure in SPEC.md § 6.2
+2. Run `bash .claude/hooks/payload-depot-skill-check.sh` — it will detect it as unregistered
+3. Add an entry to `.claude/skills/registry.md` following the format above
+```
+
+---
+
+### 6.4 Skill Check System
+
+#### `payload-depot-skill-check.sh`
+
+Installed to `.claude/hooks/payload-depot-skill-check.sh` by `adapter_post_install`. Can be run manually at any time.
+
+**Three-layer validation:**
+
+**Layer 1 — Presence check**
+- Scan `.claude/skills/*.md` excluding `registry.md`
+- Extract registered names from `registry.md`
+- WARN for each file present on disk but not in registry (unregistered skill)
+- FAIL for each name in registry with no corresponding `.md` file (missing skill)
+
+**Layer 2 — Structural check** (per skill file)
+
+Required frontmatter fields: `version`, `updated`
+Required body sections: `## Purpose`, `## Trigger`, `## Process`
+
+Report FAIL per file for any missing field or section.
+
+**Layer 3 — Readability check** (per skill file)
+- File is non-empty
+- File is valid UTF-8 (no binary content or broken encoding)
+
+**Output format:**
+```
+[rig:skill-check] Checking skills in .claude/skills/...
+
+-- presence --
+  ✓ tdd registered
+  ✓ linting registered
+  ✗ my-new-skill not in registry — add it to .claude/skills/registry.md
+
+-- structure --
+  ✓ tdd.md valid
+  ✗ my-new-skill.md missing ## Trigger section
+
+-- readability --
+  ✓ tdd.md readable
+  ✓ my-new-skill.md readable
+
+[rig:skill-check] 2 passed, 2 failed
+```
+
+Exits 0 if all checks pass, exits 1 if any FAIL (not WARN).
+
+**Integration with `payload-depot-health-check.sh`:** the simple `skill_count >= N` check is replaced with a call to `payload-depot-skill-check.sh`. Health check fails if skill check exits 1.
+
+---
+
+#### `skill-smoke-test.md`
+
+A prompt file at the repo root. Run it inside Claude Code (`/skill-smoke-test.md` or paste as a prompt) to functionally verify all skills.
+
+**What it instructs Claude to do:**
+
+1. Read `.claude/skills/registry.md` and extract all registered skill names and their smoke test prompts
+2. For each skill in order:
+   a. Invoke it using the `Skill` tool
+   b. Confirm the skill content loaded (non-empty response from the tool)
+   c. Execute the smoke test prompt for that skill
+   d. Record: loaded (yes/no), executed without error (yes/no)
+3. Print a summary table:
+
+```
+| Skill          | Loaded | Executed | Status |
+|----------------|--------|----------|--------|
+| tdd            | ✓      | ✓        | PASS   |
+| linting        | ✓      | ✓        | PASS   |
+| type-checking  | ✗      | —        | FAIL   |
+```
+
+4. For any FAIL: print the error message from the `Skill` tool call
+
+**Limitations:** The smoke test only verifies that each skill loads and its minimal prompt executes without tool errors. It does not verify the quality of the output.
+
+---
+
+### 6.6 Session Templates
 
 #### `SCRATCHPAD.md.template`
 
@@ -376,7 +517,7 @@ is ambiguous.
 <!-- Direct instructions. What should the next agent read first, do first, watch out for. -->
 ```
 
-### 6.4 Config Templates (Claude Code target)
+### 6.7 Config Templates (Claude Code target)
 
 #### `CLAUDE.md.template`
 
@@ -463,7 +604,7 @@ Claude Code permissions baseline:
 }
 ```
 
-### 6.5 Git Hook — `pre-commit`
+### 6.8 Git Hook — `pre-commit`
 
 Shell script installed to `.git/hooks/pre-commit`. Executable.
 
@@ -540,13 +681,13 @@ To add support for a new LLM tool:
    - How agent invocation differs from Claude Code
    - Any prompt syntax changes required
    - Known compatibility issues with canonical agent files
-5. Add target to the `rig-stage list-targets` output
+5. Add target to the `payload-depot list-targets` output
 
 ---
 
 ## 8. Codebase Context MCP Integration
 
-The codebase context MCP is an external component providing shared codebase knowledge across agents. Storage is ChromaDB (PersistentClient) at `.codebase-context/chroma/`. Rig does not own or modify it.
+The codebase context MCP is an external component providing shared codebase knowledge across agents. Storage is ChromaDB (PersistentClient) at `.codebase-context/chroma/`. Loadout Depot does not own or modify it.
 
 ### 8.1 What It Provides
 
@@ -560,17 +701,17 @@ The repo map is also injected into every session via `CLAUDE.md` using `@.codeba
 
 ### 8.2 Invocation
 
-During `rig-stage install`, after all file copies and hook installation, Rig invokes:
+During `payload-depot install`, after all file copies and hook installation, Loadout Depot invokes:
 
 ```bash
 ccindex init
 ```
 
-If this command is not found or exits non-zero, Rig prints an error and exits with code 4. The `--no-codebase-index` flag skips this step entirely.
+If this command is not found or exits non-zero, Loadout Depot prints an error and exits with code 4. The `--no-codebase-index` flag skips this step entirely.
 
 ### 8.3 Gitignore
 
-The ChromaDB directory is local and must not be committed. Rig appends this entry during install:
+The ChromaDB directory is local and must not be committed. Loadout Depot appends this entry during install:
 
 ```
 .codebase-context/chroma/
@@ -578,7 +719,7 @@ The ChromaDB directory is local and must not be committed. Rig appends this entr
 
 ### 8.4 Contract
 
-Rig requires only that `ccindex init` is available on `$PATH` and exits 0 on success.
+Loadout Depot requires only that `ccindex init` is available on `$PATH` and exits 0 on success.
 
 ---
 
@@ -603,7 +744,7 @@ changelog:
 | New output field, new process step, extended scope | Minor | 1.0.0 → 1.1.0 |
 | Changed role definition, removed output, new required input | Major | 1.0.0 → 2.0.0 |
 
-**Rig version vs prompt versions:** Rig carries its own semver in `rig --version`. Prompt versions are independent. A single Rig release may contain prompts at different versions.
+**Loadout Depot version vs prompt versions:** Loadout Depot carries its own semver in `rig --version`. Prompt versions are independent. A single Loadout Depot release may contain prompts at different versions.
 
 ---
 
@@ -624,20 +765,20 @@ tests/
     └── cpp-project/          ← minimal C++ project with CMakeLists.txt
 ```
 
-### 10.2 Test Cases — `rig-stage install`
+### 10.2 Test Cases — `payload-depot install`
 
 | Test | Description | Expected result |
 |---|---|---|
-| fresh-install-python | Run `rig-stage install` in a clean Python fixture | All agents, skills, config, session, hook installed; exit 0 |
-| fresh-install-typescript | Run `rig-stage install` in a clean TS fixture | All agents, skills, config, session, hook installed; exit 0 |
-| fresh-install-cpp | Run `rig-stage install` in a clean C++ fixture | All agents, skills, config, session, hook installed; exit 0 |
-| skip-existing-config | Run `rig-stage install` where CLAUDE.md already exists | CLAUDE.md not overwritten; warning printed; exit 0 |
-| force-overwrite | Run `rig-stage install --force` where CLAUDE.md exists | CLAUDE.md overwritten; exit 0 |
-| dry-run | Run `rig-stage install --dry-run` | No files written; install plan printed; exit 0 |
-| no-git-repo | Run `rig-stage install` in directory with no `.git/` | Error printed; exit 2 |
-| unknown-target | Run `rig-stage install --target nonexistent` | Error printed; exit 3 |
-| no-hooks | Run `rig-stage install --no-hooks` | All files installed; hook not installed; exit 0 |
-| no-codebase-index | Run `rig-stage install --no-codebase-index` | All files installed; ccindex not invoked; exit 0 |
+| fresh-install-python | Run `payload-depot install` in a clean Python fixture | All agents, skills, config, session, hook installed; exit 0 |
+| fresh-install-typescript | Run `payload-depot install` in a clean TS fixture | All agents, skills, config, session, hook installed; exit 0 |
+| fresh-install-cpp | Run `payload-depot install` in a clean C++ fixture | All agents, skills, config, session, hook installed; exit 0 |
+| skip-existing-config | Run `payload-depot install` where CLAUDE.md already exists | CLAUDE.md not overwritten; warning printed; exit 0 |
+| force-overwrite | Run `payload-depot install --force` where CLAUDE.md exists | CLAUDE.md overwritten; exit 0 |
+| dry-run | Run `payload-depot install --dry-run` | No files written; install plan printed; exit 0 |
+| no-git-repo | Run `payload-depot install` in directory with no `.git/` | Error printed; exit 2 |
+| unknown-target | Run `payload-depot install --target nonexistent` | Error printed; exit 3 |
+| no-hooks | Run `payload-depot install --no-hooks` | All files installed; hook not installed; exit 0 |
+| no-codebase-index | Run `payload-depot install --no-codebase-index` | All files installed; ccindex not invoked; exit 0 |
 
 ### 10.3 Test Cases — `pre-commit` hook
 
@@ -651,7 +792,22 @@ tests/
 | missing-tool | Commit when ruff is not installed | Warning printed; hook exits 0 (missing tool is not blocking) |
 | unknown-language | Commit in project with no recognised language marker | Warning printed; hook exits 0 |
 
-### 10.4 Running Tests
+### 10.4 Test Cases — `payload-depot-skill-check.sh`
+
+| Test | Description | Expected result |
+|---|---|---|
+| all-skills-valid | All skills present, registered, and structurally valid | All checks pass; exit 0 |
+| unregistered-skill | Skill file present but not in registry | WARN printed for that skill; exit 0 (warning, not error) |
+| missing-skill | Skill in registry but `.md` file absent | FAIL printed; exit 1 |
+| missing-frontmatter | Skill file has no `---` frontmatter block | FAIL printed for that skill; exit 1 |
+| missing-version | Frontmatter present but `version` field absent | FAIL printed for that skill; exit 1 |
+| missing-trigger-section | Skill file has no `## Trigger` section | FAIL printed for that skill; exit 1 |
+| missing-process-section | Skill file has no `## Process` section | FAIL printed for that skill; exit 1 |
+| empty-skill-file | Skill file is empty (0 bytes) | FAIL printed for that skill; exit 1 |
+| registry-excluded | `registry.md` is not itself validated as a skill | No failure for registry.md |
+| health-check-delegates | `payload-depot-health-check.sh` calls `payload-depot-skill-check.sh` | Health check fails when skill check exits 1 |
+
+### 10.6 Running Tests
 
 ```bash
 # Run all tests
@@ -666,7 +822,7 @@ RIG_TEST_VERBOSE=1 bash tests/test_install.sh
 
 ## 11. Error Handling
 
-### 11.1 `rig-stage install` Errors
+### 11.1 `payload-depot install` Errors
 
 All errors print a clear message to stderr with the prefix `[rig] ERROR:` and a hint for resolution where applicable.
 
@@ -675,7 +831,7 @@ All errors print a clear message to stderr with the prefix `[rig] ERROR:` and a 
              Initialise a git repository first: git init
 
 [rig] ERROR: Target 'foobar' not found. Available targets: claude-code
-             Run `rig-stage list-targets` for details.
+             Run `payload-depot list-targets` for details.
 
 [rig] ERROR: Context manager install failed (exit code 1).
              Check context-manager/install.sh output above.
@@ -703,7 +859,7 @@ The hook prints directly to the terminal. Format:
 The following entries must be added to the project's `.gitignore` during install (appended, not overwritten):
 
 ```
-# Rig session files — ephemeral, not committed
+# Loadout Depot session files — ephemeral, not committed
 SCRATCHPAD.md
 
 # Codebase context — local vector DB, not committed
@@ -760,8 +916,8 @@ Every agent, before ending a session, must:
 
 | File | Format | Owner | Committed |
 |---|---|---|---|
-| `agents/*.md` | Markdown with YAML front matter | Rig | Yes (in Rig repo) |
-| `skills/*.md` | Markdown with YAML front matter | Rig | Yes (in Rig repo) |
+| `agents/*.md` | Markdown with YAML front matter | Loadout Depot | Yes (in Loadout Depot repo) |
+| `skills/*.md` | Markdown with YAML front matter | Loadout Depot | Yes (in Loadout Depot repo) |
 | `CLAUDE.md` | Markdown | User (from template) | Yes |
 | `CONVENTIONS.md` | Markdown | User (from template) | Yes |
 | `AGENTS.md` | Markdown | User (from template) | Yes |
@@ -774,12 +930,14 @@ Every agent, before ending a session, must:
 | `docs/decisions/*.md` | Markdown | adr skill | Yes |
 | `CHANGELOG.md` | Markdown (Keep a Changelog) | changelog skill | Yes |
 | `.env.example` | dotenv | env-setup skill | Yes |
+| `.claude/skills/registry.md` | Markdown (heading-per-skill) | Loadout Depot | Yes |
+| `skill-smoke-test.md` | Markdown prompt | Loadout Depot | Yes (in Loadout Depot repo) |
 
 ---
 
 ## 15. Open Questions
 
 - Should `rig` be a bash script (zero dependencies, maximum portability) or a Python CLI (richer arg parsing, better testability)? **Decision deferred. Start with bash for v1.0; revisit if argument complexity grows.**
-- Should session files (SCRATCHPAD, DECISIONS, HANDOFF) be per-session (wiped on each `rig-stage install`) or accumulated? **Decision: SCRATCHPAD.md wiped on install (ephemeral). HANDOFF.md and DECISIONS.md committed to git and accumulated — they are the cross-session context persistence layer.**
+- Should session files (SCRATCHPAD, DECISIONS, HANDOFF) be per-session (wiped on each `payload-depot install`) or accumulated? **Decision: SCRATCHPAD.md wiped on install (ephemeral). HANDOFF.md and DECISIONS.md committed to git and accumulated — they are the cross-session context persistence layer.**
 - Should `rig` support updating existing installs (`rig update`) that refreshes only agent and skill files while preserving user config? **Out of scope for v1.0. Log as v1.1 feature.**
 - Should `ccindex init` be a hard requirement or optional? **Optional via `--no-codebase-index`. Missing `ccindex` binary is a warning, not an error — exit code 4 only on failed execution, not on missing binary.**

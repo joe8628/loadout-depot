@@ -1,4 +1,4 @@
-# Rig v1.0 Implementation Plan
+# Loadout Depot v1.0 Implementation Plan
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -45,7 +45,7 @@ git submodule update --init --recursive
 - [ ] **Step 3: Write `.gitignore`**
 
 ```
-# Rig session files — ephemeral, not committed
+# Loadout Depot session files — ephemeral, not committed
 SCRATCHPAD.md
 
 # Codebase context — local vector DB, not committed
@@ -58,7 +58,7 @@ SCRATCHPAD.md
 - [ ] **Step 4: Write `README.md` stub**
 
 ```markdown
-# Rig
+# Loadout Depot
 
 CLI scaffold that bootstraps any project with Claude Code agents, skills, session
 templates, and a codebase context index.
@@ -77,7 +77,7 @@ See `SPEC.md` for full documentation.
 ```markdown
 # Changelog
 
-All notable changes to Rig will be documented here.
+All notable changes to Loadout Depot will be documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
@@ -89,7 +89,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ```markdown
 # Claude Code Target
 
-Default Rig target. Installs agents to `.claude/agents/`, skills to `.claude/skills/`.
+Default Loadout Depot target. Installs agents to `.claude/agents/`, skills to `.claude/skills/`.
 Requires the `claude` CLI to be installed.
 ```
 
@@ -133,7 +133,7 @@ git commit -m "chore: initialize repo structure and codebase-context submodule"
 
 ```bash
 #!/usr/bin/env bash
-# Minimal test assertion library for Rig tests
+# Minimal test assertion library for Loadout Depot tests
 
 PASS=0
 FAIL=0
@@ -205,38 +205,38 @@ report() {
 #!/usr/bin/env bash
 set -euo pipefail
 
-RIG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-source "$RIG_DIR/tests/lib.sh"
+LOADOUT_DEPOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$LOADOUT_DEPOT_DIR/tests/lib.sh"
 
 echo "=== CLI Tests ==="
 
 echo ""
 echo "-- rig version --"
-output=$("$RIG_DIR/rig" version 2>&1) || true
+output=$("$LOADOUT_DEPOT_DIR/rig" version 2>&1) || true
 assert_contains "version outputs version string" "1.0.0" "$output"
 
 echo ""
 echo "-- rig help --"
-output=$("$RIG_DIR/rig" help 2>&1) || true
+output=$("$LOADOUT_DEPOT_DIR/rig" help 2>&1) || true
 assert_contains "help mentions install" "install" "$output"
 assert_contains "help mentions list" "list" "$output"
 
 echo ""
 echo "-- rig unknown command --"
-"$RIG_DIR/rig" unknown-cmd 2>/dev/null; code=$?
+"$LOADOUT_DEPOT_DIR/rig" unknown-cmd 2>/dev/null; code=$?
 assert_exit_code "unknown command exits 1" "1" "$code"
 
 echo ""
 echo "-- rig install unknown target --"
 tmp=$(mktemp -d) && git -C "$tmp" init -q
-"$RIG_DIR/rig" install --target nonexistent 2>/dev/null; code=$?
+"$LOADOUT_DEPOT_DIR/rig" install --target nonexistent 2>/dev/null; code=$?
 assert_exit_code "unknown target exits 3" "3" "$code"
 rm -rf "$tmp"
 
 echo ""
 echo "-- rig install no git repo --"
 tmp=$(mktemp -d)
-(cd "$tmp" && "$RIG_DIR/rig" install 2>/dev/null); code=$?
+(cd "$tmp" && "$LOADOUT_DEPOT_DIR/rig" install 2>/dev/null); code=$?
 assert_exit_code "no git repo exits 2" "2" "$code"
 rm -rf "$tmp"
 
@@ -257,7 +257,7 @@ Expected: multiple FAIL (rig is an empty stub)
 #!/usr/bin/env bash
 set -euo pipefail
 
-RIG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOADOUT_DEPOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RIG_VERSION="1.0.0"
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -274,7 +274,7 @@ Usage: rig <command> [options]
 Commands:
   install   Bootstrap the current directory as an AI-assisted project
   list      List available agents and skills
-  version   Print Rig version
+  version   Print Loadout Depot version
   help      Print this message
 
 Options for install:
@@ -294,12 +294,12 @@ cmd_help() { usage; }
 
 cmd_list() {
   echo "Agents:"
-  for f in "$RIG_DIR/agents/"*.md; do
+  for f in "$LOADOUT_DEPOT_DIR/agents/"*.md; do
     [[ -f "$f" ]] && echo "  $(basename "$f" .md)"
   done
   echo ""
   echo "Skills:"
-  for f in "$RIG_DIR/skills/"*.md; do
+  for f in "$LOADOUT_DEPOT_DIR/skills/"*.md; do
     [[ -f "$f" ]] && echo "  $(basename "$f" .md)"
   done
 }
@@ -326,9 +326,9 @@ cmd_install() {
     exit 2
   fi
 
-  local adapter_dir="$RIG_DIR/targets/$target"
+  local adapter_dir="$LOADOUT_DEPOT_DIR/targets/$target"
   if [[ ! -d "$adapter_dir" ]]; then
-    err "Target '$target' not found. Available targets: $(ls "$RIG_DIR/targets/")"
+    err "Target '$target' not found. Available targets: $(ls "$LOADOUT_DEPOT_DIR/targets/")"
     err "Run \`rig list-targets\` for details."
     exit 3
   fi
@@ -362,21 +362,21 @@ cmd_install() {
 
   # Step 4: Copy agents
   local agent_count
-  agent_count=$(find "$RIG_DIR/agents" -name "*.md" | wc -l | tr -d ' ')
+  agent_count=$(find "$LOADOUT_DEPOT_DIR/agents" -name "*.md" | wc -l | tr -d ' ')
   if $dry_run; then
     log "[dry-run] Copy agents/ → $AGENT_INSTALL_PATH ($agent_count files)"
   else
-    cp "$RIG_DIR/agents/"*.md "$AGENT_INSTALL_PATH/"
+    cp "$LOADOUT_DEPOT_DIR/agents/"*.md "$AGENT_INSTALL_PATH/"
     ok "Agents copied       → $AGENT_INSTALL_PATH ($agent_count files)"
   fi
 
   # Step 5: Copy skills
   local skill_count
-  skill_count=$(find "$RIG_DIR/skills" -name "*.md" | wc -l | tr -d ' ')
+  skill_count=$(find "$LOADOUT_DEPOT_DIR/skills" -name "*.md" | wc -l | tr -d ' ')
   if $dry_run; then
     log "[dry-run] Copy skills/ → $SKILL_INSTALL_PATH ($skill_count files)"
   else
-    cp "$RIG_DIR/skills/"*.md "$SKILL_INSTALL_PATH/"
+    cp "$LOADOUT_DEPOT_DIR/skills/"*.md "$SKILL_INSTALL_PATH/"
     ok "Skills copied        → $SKILL_INSTALL_PATH ($skill_count files)"
   fi
 
@@ -408,7 +408,7 @@ cmd_install() {
   if $dry_run; then
     log "[dry-run] Copy session/ → . (3 files)"
   else
-    cp "$RIG_DIR/session/"*.template .
+    cp "$LOADOUT_DEPOT_DIR/session/"*.template .
     # Rename .template → strip extension
     for f in ./*.template; do
       mv "$f" "${f%.template}"
@@ -420,7 +420,7 @@ cmd_install() {
   local gitignore_block
   gitignore_block="$(cat <<'EOF'
 
-# Rig session files — ephemeral, not committed
+# Loadout Depot session files — ephemeral, not committed
 SCRATCHPAD.md
 
 # Codebase context — local vector DB, not committed
@@ -429,7 +429,7 @@ EOF
 )"
   if $dry_run; then
     log "[dry-run] Append .gitignore entries"
-  elif ! grep -qF "Rig session files" .gitignore 2>/dev/null; then
+  elif ! grep -qF "Loadout Depot session files" .gitignore 2>/dev/null; then
     echo "$gitignore_block" >> .gitignore
     ok ".gitignore           → updated"
   fi
@@ -440,7 +440,7 @@ EOF
   elif $dry_run; then
     log "[dry-run] Install .git/hooks/pre-commit"
   else
-    cp "$RIG_DIR/hooks/pre-commit" ".git/hooks/pre-commit"
+    cp "$LOADOUT_DEPOT_DIR/hooks/pre-commit" ".git/hooks/pre-commit"
     chmod +x ".git/hooks/pre-commit"
     ok "Git hook installed   → .git/hooks/pre-commit"
   fi
@@ -452,7 +452,7 @@ EOF
     log "[dry-run] Run ccindex init"
   else
     # Install codebase-context tool if submodule install script present
-    local cb_install="$RIG_DIR/codebase-context/install.sh"
+    local cb_install="$LOADOUT_DEPOT_DIR/codebase-context/install.sh"
     if [[ -x "$cb_install" ]]; then
       "$cb_install" || { err "codebase-context install failed"; exit 4; }
     fi
@@ -516,7 +516,7 @@ Add to `tests/test_cli.sh` before `report`:
 ```bash
 echo ""
 echo "-- adapter exports --"
-source "$RIG_DIR/targets/claude-code/adapter.sh" 2>/dev/null || true
+source "$LOADOUT_DEPOT_DIR/targets/claude-code/adapter.sh" 2>/dev/null || true
 assert_eq "ADAPTER_NAME is claude-code" "claude-code" "${ADAPTER_NAME:-}"
 assert_eq "AGENT_INSTALL_PATH is .claude/agents" ".claude/agents" "${AGENT_INSTALL_PATH:-}"
 assert_eq "SKILL_INSTALL_PATH is .claude/skills" ".claude/skills" "${SKILL_INSTALL_PATH:-}"
@@ -985,7 +985,7 @@ EOF
 touch agents/.gitkeep skills/.gitkeep
 cat > hooks/pre-commit <<'EOF'
 #!/usr/bin/env bash
-# Rig pre-commit hook — stub (implemented in Phase 7)
+# Loadout Depot pre-commit hook — stub (implemented in Phase 7)
 exit 0
 EOF
 chmod +x hooks/pre-commit
@@ -997,15 +997,15 @@ chmod +x hooks/pre-commit
 #!/usr/bin/env bash
 set -euo pipefail
 
-RIG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-source "$RIG_DIR/tests/lib.sh"
+LOADOUT_DEPOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$LOADOUT_DEPOT_DIR/tests/lib.sh"
 
 # Run rig install in an isolated copy of a fixture
 setup_fixture() {
   local fixture="$1"
   local tmp
   tmp=$(mktemp -d)
-  cp -r "$RIG_DIR/tests/fixtures/$fixture/." "$tmp/"
+  cp -r "$LOADOUT_DEPOT_DIR/tests/fixtures/$fixture/." "$tmp/"
   # Ensure .git exists (cp doesn't copy from the fixture init)
   git -C "$tmp" init -q 2>/dev/null || true
   echo "$tmp"
@@ -1019,7 +1019,7 @@ echo "=== Install Tests ==="
 echo ""
 echo "-- fresh-install-python --"
 dir=$(setup_fixture python-project)
-(cd "$dir" && "$RIG_DIR/rig" install --no-codebase-index 2>&1) || true
+(cd "$dir" && "$LOADOUT_DEPOT_DIR/rig" install --no-codebase-index 2>&1) || true
 assert_dir_exists  "agents dir created"  "$dir/.claude/agents"
 assert_dir_exists  "skills dir created"  "$dir/.claude/skills"
 assert_file_exists "CLAUDE.md written"   "$dir/CLAUDE.md"
@@ -1036,7 +1036,7 @@ cleanup "$dir"
 echo ""
 echo "-- fresh-install-typescript --"
 dir=$(setup_fixture typescript-project)
-(cd "$dir" && "$RIG_DIR/rig" install --no-codebase-index 2>&1) || true
+(cd "$dir" && "$LOADOUT_DEPOT_DIR/rig" install --no-codebase-index 2>&1) || true
 assert_file_exists "CLAUDE.md written" "$dir/CLAUDE.md"
 assert_dir_exists  "agents dir"        "$dir/.claude/agents"
 cleanup "$dir"
@@ -1045,7 +1045,7 @@ cleanup "$dir"
 echo ""
 echo "-- fresh-install-cpp --"
 dir=$(setup_fixture cpp-project)
-(cd "$dir" && "$RIG_DIR/rig" install --no-codebase-index 2>&1) || true
+(cd "$dir" && "$LOADOUT_DEPOT_DIR/rig" install --no-codebase-index 2>&1) || true
 assert_file_exists "CLAUDE.md written" "$dir/CLAUDE.md"
 assert_dir_exists  "agents dir"        "$dir/.claude/agents"
 cleanup "$dir"
@@ -1055,7 +1055,7 @@ echo ""
 echo "-- skip-existing-config --"
 dir=$(setup_fixture python-project)
 echo "# existing" > "$dir/CLAUDE.md"
-output=$(cd "$dir" && "$RIG_DIR/rig" install --no-codebase-index 2>&1) || true
+output=$(cd "$dir" && "$LOADOUT_DEPOT_DIR/rig" install --no-codebase-index 2>&1) || true
 assert_contains    "skip message printed"      "Skipped" "$output"
 existing=$(cat "$dir/CLAUDE.md")
 assert_eq          "CLAUDE.md not overwritten" "# existing" "$existing"
@@ -1066,7 +1066,7 @@ echo ""
 echo "-- force-overwrite --"
 dir=$(setup_fixture python-project)
 echo "# existing" > "$dir/CLAUDE.md"
-(cd "$dir" && "$RIG_DIR/rig" install --force --no-codebase-index 2>&1) || true
+(cd "$dir" && "$LOADOUT_DEPOT_DIR/rig" install --force --no-codebase-index 2>&1) || true
 existing=$(cat "$dir/CLAUDE.md")
 [[ "$existing" != "# existing" ]]
 assert_eq "CLAUDE.md overwritten" "0" "$?"
@@ -1076,7 +1076,7 @@ cleanup "$dir"
 echo ""
 echo "-- dry-run --"
 dir=$(setup_fixture python-project)
-(cd "$dir" && "$RIG_DIR/rig" install --dry-run --no-codebase-index 2>&1) || true
+(cd "$dir" && "$LOADOUT_DEPOT_DIR/rig" install --dry-run --no-codebase-index 2>&1) || true
 # No files should have been written
 [[ ! -f "$dir/CLAUDE.md" ]]
 assert_eq "dry-run: CLAUDE.md not written" "0" "$?"
@@ -1086,7 +1086,7 @@ cleanup "$dir"
 echo ""
 echo "-- no-git-repo --"
 dir=$(mktemp -d)
-(cd "$dir" && "$RIG_DIR/rig" install --no-codebase-index 2>/dev/null); code=$?
+(cd "$dir" && "$LOADOUT_DEPOT_DIR/rig" install --no-codebase-index 2>/dev/null); code=$?
 assert_exit_code "no git repo exits 2" "2" "$code"
 cleanup "$dir"
 
@@ -1094,7 +1094,7 @@ cleanup "$dir"
 echo ""
 echo "-- unknown-target --"
 dir=$(setup_fixture python-project)
-(cd "$dir" && "$RIG_DIR/rig" install --target nonexistent --no-codebase-index 2>/dev/null); code=$?
+(cd "$dir" && "$LOADOUT_DEPOT_DIR/rig" install --target nonexistent --no-codebase-index 2>/dev/null); code=$?
 assert_exit_code "unknown target exits 3" "3" "$code"
 cleanup "$dir"
 
@@ -1102,7 +1102,7 @@ cleanup "$dir"
 echo ""
 echo "-- no-hooks --"
 dir=$(setup_fixture python-project)
-(cd "$dir" && "$RIG_DIR/rig" install --no-hooks --no-codebase-index 2>&1) || true
+(cd "$dir" && "$LOADOUT_DEPOT_DIR/rig" install --no-hooks --no-codebase-index 2>&1) || true
 [[ ! -f "$dir/.git/hooks/pre-commit" ]]
 assert_eq "hook not installed" "0" "$?"
 cleanup "$dir"
@@ -1111,7 +1111,7 @@ cleanup "$dir"
 echo ""
 echo "-- no-codebase-index --"
 dir=$(setup_fixture python-project)
-output=$(cd "$dir" && "$RIG_DIR/rig" install --no-codebase-index 2>&1) || true
+output=$(cd "$dir" && "$LOADOUT_DEPOT_DIR/rig" install --no-codebase-index 2>&1) || true
 assert_contains "skip message for index" "codebase index" "$output"
 cleanup "$dir"
 
@@ -1147,10 +1147,10 @@ git commit -m "test: add install integration tests and fixtures"
 #!/usr/bin/env bash
 set -euo pipefail
 
-RIG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-source "$RIG_DIR/tests/lib.sh"
+LOADOUT_DEPOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$LOADOUT_DEPOT_DIR/tests/lib.sh"
 
-HOOK="$RIG_DIR/hooks/pre-commit"
+HOOK="$LOADOUT_DEPOT_DIR/hooks/pre-commit"
 
 echo "=== Hook Tests ==="
 
@@ -1256,7 +1256,7 @@ bash tests/test_hooks.sh
 
 ```bash
 #!/usr/bin/env bash
-# Rig pre-commit hook
+# Loadout Depot pre-commit hook
 # Detects project language and runs linting + type-checking.
 # Blocks commit on failure. Skips gracefully if tools are missing.
 
@@ -1500,7 +1500,7 @@ All tests must pass before this step is complete.
 
 ```bash
 git add skills/ agents/
-git commit -m "feat: add remaining skills and prompt versioning headers — Rig v1.0 complete"
+git commit -m "feat: add remaining skills and prompt versioning headers — Loadout Depot v1.0 complete"
 ```
 
 ---

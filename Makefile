@@ -1,6 +1,6 @@
 INSTALL_DIR := $(HOME)/.local/bin
-BINARY      := rig-stage
-SOURCE      := $(CURDIR)/rig-stage
+BINARY      := payload-depot
+SOURCE      := $(CURDIR)/payload-depot
 
 .PHONY: install uninstall test
 

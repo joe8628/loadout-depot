@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-RIG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-source "$RIG_DIR/tests/lib.sh"
+PAYLOAD_DEPOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$PAYLOAD_DEPOT_DIR/tests/lib.sh"
 
-SKILL_CHECK="$RIG_DIR/targets/claude-code/rig-skill-check.sh"
+SKILL_CHECK="$PAYLOAD_DEPOT_DIR/targets/claude-code/payload-depot-skill-check.sh"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -22,6 +22,12 @@ make_valid_skill() {
 ---
 version: 1.0.0
 updated: 2026-03-01
+changelog:
+  - 1.0.0: initial version
+skill_type: technique
+hierarchy_level: 3
+parent_skills: []
+uses_skills: []
 ---
 
 # test-skill
@@ -34,21 +40,6 @@ Test trigger.
 
 ## Process
 Test process.
-SKILL
-}
-
-make_valid_skill_new_format() {
-  local dir="$1" name="$2"
-  mkdir -p "$dir/.claude/skills/$name"
-  cat > "$dir/.claude/skills/$name/SKILL.md" <<'SKILL'
----
-name: test-skill
-category: testing
----
-
-# test-skill
-
-Test skill content.
 SKILL
 }
 
@@ -96,15 +87,40 @@ exit_code=0; run_check "$dir" > /dev/null 2>&1 || exit_code=$?
 assert_exit_code "all valid exits 0" "0" "$exit_code"
 rm -rf "$dir"
 
-# ── 3. all-valid new-format frontmatter ───────────────────────────────────────
+# ── 3. skill with uses_skills reference ───────────────────────────────────────
 echo ""
-echo "-- all-valid-new-format --"
+echo "-- uses-skills-reference --"
 dir=$(setup_skill_env)
 init_registry "$dir"
-make_valid_skill_new_format "$dir" "clean-code"
-make_registry_entry "$dir" "clean-code"
+make_valid_skill "$dir" "tdd"
+make_valid_skill "$dir" "linting"
+make_registry_entry "$dir" "tdd"
+make_registry_entry "$dir" "linting"
+# Add a skill that uses another registered skill
+mkdir -p "$dir/.claude/skills/commit-msg"
+cat > "$dir/.claude/skills/commit-msg/SKILL.md" <<'SKILL'
+---
+version: 1.0.0
+updated: 2026-03-01
+changelog:
+  - 1.0.0: initial version
+skill_type: technique
+hierarchy_level: 3
+parent_skills: []
+uses_skills:
+  - linting
+---
+# commit-msg
+## Purpose
+Test.
+## Trigger
+Test.
+## Process
+Test.
+SKILL
+make_registry_entry "$dir" "commit-msg"
 exit_code=0; run_check "$dir" > /dev/null 2>&1 || exit_code=$?
-assert_exit_code "new-format skill exits 0" "0" "$exit_code"
+assert_exit_code "uses_skills reference exits 0" "0" "$exit_code"
 rm -rf "$dir"
 
 # ── 4. unregistered-skill (warn only, exit 0) ─────────────────────────────────
@@ -145,9 +161,9 @@ assert_exit_code "missing frontmatter exits 1"    "1" "$exit_code"
 assert_contains  "missing frontmatter prints fail" "missing frontmatter" "$output"
 rm -rf "$dir"
 
-# ── 7. missing-name-and-version ───────────────────────────────────────────────
+# ── 7. missing-version ────────────────────────────────────────────────────────
 echo ""
-echo "-- missing-name-and-version --"
+echo "-- missing-version --"
 dir=$(setup_skill_env)
 init_registry "$dir"
 make_registry_entry "$dir" "tdd"
@@ -162,8 +178,8 @@ updated: 2026-03-01
 Some content.
 SKILL
 exit_code=0; output=$(run_check "$dir" 2>&1) || exit_code=$?
-assert_exit_code "missing name/version exits 1"    "1" "$exit_code"
-assert_contains  "missing name/version prints fail" "missing 'name' or 'version'" "$output"
+assert_exit_code "missing version exits 1"    "1" "$exit_code"
+assert_contains  "missing version prints fail" "missing 'version'" "$output"
 rm -rf "$dir"
 
 # ── 8. empty-skill-file ───────────────────────────────────────────────────────
@@ -209,13 +225,26 @@ REG
 mkdir -p "$dir/.claude/skills/architecture/lich"
 cat > "$dir/.claude/skills/architecture/lich/SKILL.md" <<'SKILL'
 ---
-name: lich
-category: architecture
+version: 1.0.0
+updated: 2026-03-01
+changelog:
+  - 1.0.0: initial version
+skill_type: architecture
+hierarchy_level: 2
+parent_skills: []
+uses_skills: []
 ---
 
-# Architecture Orchestrator
+# architecture/lich
 
-Some content.
+## Purpose
+Architecture orchestrator.
+
+## Trigger
+When designing a system.
+
+## Process
+Run Socratic dialogue.
 SKILL
 exit_code=0; run_check "$dir" > /dev/null 2>&1 || exit_code=$?
 assert_exit_code "nested skill exits 0" "0" "$exit_code"

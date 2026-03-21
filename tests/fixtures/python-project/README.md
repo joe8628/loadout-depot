@@ -1,3 +1,3 @@
 # test-project
 
-A test fixture for Rig install tests.
+A test fixture for Loadout Depot install tests.

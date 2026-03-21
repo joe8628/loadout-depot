@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Rig will be documented here.
+All notable changes to Loadout Depot will be documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 Versioning: [Semantic Versioning](https://semver.org/)
 
@@ -8,9 +8,9 @@ Versioning: [Semantic Versioning](https://semver.org/)
 
 ### Added
 
-- `rig-stage` CLI entrypoint with `install`, `list`, `version`, and `help` commands (named `rig-stage` to avoid collision with `rig` apt package)
-- `rig-stage install` flags: `--target`, `--force`, `--dry-run`, `--no-hooks`, `--no-codebase-index`
-- `Makefile` with `install` target (symlink to `~/.local/bin/rig-stage`) and `uninstall` target
+- `payload-depot` CLI entrypoint with `install`, `list`, `version`, and `help` commands (named `payload-depot` to avoid collision with `rig` apt package)
+- `payload-depot install` flags: `--target`, `--force`, `--dry-run`, `--no-hooks`, `--no-codebase-index`
+- `Makefile` with `install` target (symlink to `~/.local/bin/payload-depot`) and `uninstall` target
 - Claude Code target adapter (`targets/claude-code/adapter.sh`)
 - 9 agents with prompt versioning headers: `architect`, `planner`, `code-writer`, `code-reviewer`, `docs-writer`, `security-auditor`, `debugger`, `test-writer`, `issue-logger`
 - 10 skills with prompt versioning headers: `tdd`, `linting`, `type-checking`, `dependency-audit`, `adr`, `readme-gen`, `openapi-lint`, `changelog`, `commit-msg`, `env-setup`

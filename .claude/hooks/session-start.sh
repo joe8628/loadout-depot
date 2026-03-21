@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Rig session-start hook
-# Installed to .claude/hooks/session-start.sh by rig-stage.
+# Installed to .claude/hooks/session-start.sh by payload-depot.
 # Fires before each UserPromptSubmit — all operations are idempotent.
 
 # 0. Post-install health check — runs once after install/upgrade, then skipped
-# RIG_HEALTH_CHECK_ACTIVE guard prevents re-entry when the health check calls
+# PAYLOAD_DEPOT_HEALTH_CHECK_ACTIVE guard prevents re-entry when the health check calls
 # session-start.sh internally to test SCRATCHPAD.md writing behaviour.
-if [[ ! -f ".rig-verified" ]] && [[ -x ".claude/hooks/rig-health-check.sh" ]] \
-   && [[ "${RIG_HEALTH_CHECK_ACTIVE:-}" != "1" ]]; then
-  bash ".claude/hooks/rig-health-check.sh" || true
+if [[ ! -f ".payload-depot-verified" ]] && [[ -x ".claude/hooks/payload-depot-health-check.sh" ]] \
+   && [[ "${PAYLOAD_DEPOT_HEALTH_CHECK_ACTIVE:-}" != "1" ]]; then
+  bash ".claude/hooks/payload-depot-health-check.sh" || true
 fi
 
 # 1. Sync remote session files (non-fatal — repo may have no remote or no network)

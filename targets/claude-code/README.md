@@ -1,6 +1,6 @@
 # Claude Code Target
 
-Default Rig target. Installs agents to `.claude/agents/`, skills to `.claude/skills/`.
+Default Loadout Depot target. Installs agents to `.claude/agents/`, skills to `.claude/skills/`.
 
 ## Requirements
 

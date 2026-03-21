@@ -1,24 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-RIG_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
-RIG_VERSION="1.0.0"
+PAYLOAD_DEPOT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+PAYLOAD_DEPOT_VERSION="1.0.0"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-log()  { echo "[rig-stage] $*"; }
-err()  { echo "[rig-stage] ERROR: $*" >&2; }
-skip() { echo "[rig-stage] ~ Skipped              → $*"; }
-ok()   { echo "[rig-stage] ✓ $*"; }
+log()  { echo "[payload-depot] $*"; }
+err()  { echo "[payload-depot] ERROR: $*" >&2; }
+skip() { echo "[payload-depot] ~ Skipped              → $*"; }
+ok()   { echo "[payload-depot] ✓ $*"; }
 
 usage() {
   cat <<EOF
-Usage: rig-stage <command> [options]
+Usage: payload-depot <command> [options]
 
 Commands:
   install        Bootstrap the current directory as an AI-assisted project
   update         Refresh agents and skills without touching user config files
-  upgrade        Pull latest Rig source from GitHub then run update
+  upgrade        Pull latest Loadout Depot source from GitHub then run update
   list           List available agents and skills
   list-targets   List available install targets
   version        Print Rig version
@@ -97,12 +97,12 @@ _log_substitutions() {
 
 _ensure_gitignore_entries() {
   local updated=false
-  if ! grep -qF "Rig session files" .gitignore 2>/dev/null; then
+  if ! grep -qF "Loadout Depot session files" .gitignore 2>/dev/null; then
     cat >> .gitignore <<'GITIGNORE'
 
-# Rig session files — ephemeral, not committed
+# Loadout Depot session files — ephemeral, not committed
 SCRATCHPAD.md
-.rig-verified
+.payload-depot-verified
 
 # Codebase context — local vector DB, not committed
 .codebase-context/chroma/
@@ -110,8 +110,8 @@ GITIGNORE
     updated=true
   else
     # Block already present — ensure individual entries exist (upgrade path)
-    if ! grep -qF ".rig-verified" .gitignore 2>/dev/null; then
-      printf '\n.rig-verified\n' >> .gitignore
+    if ! grep -qF ".payload-depot-verified" .gitignore 2>/dev/null; then
+      printf '\n.payload-depot-verified\n' >> .gitignore
       updated=true
     fi
     if ! grep -qF ".codebase-context/chroma/" .gitignore 2>/dev/null; then
@@ -126,31 +126,31 @@ GITIGNORE
 
 # ── Commands ──────────────────────────────────────────────────────────────────
 
-cmd_version() { echo "rig-stage $RIG_VERSION"; }
+cmd_version() { echo "payload-depot $PAYLOAD_DEPOT_VERSION"; }
 
 cmd_help() { usage; }
 
 cmd_upgrade() {
-  if [[ ! -d "$RIG_DIR/.git" ]]; then
-    err "No .git directory found in $RIG_DIR — cannot upgrade."
+  if [[ ! -d "$PAYLOAD_DEPOT_DIR/.git" ]]; then
+    err "No .git directory found in $PAYLOAD_DEPOT_DIR — cannot upgrade."
     exit 1
   fi
 
   local before
-  before=$(git -C "$RIG_DIR" rev-parse HEAD)
+  before=$(git -C "$PAYLOAD_DEPOT_DIR" rev-parse HEAD)
 
   log "Pulling latest from GitHub..."
-  git -C "$RIG_DIR" fetch origin main
-  git -C "$RIG_DIR" reset --hard origin/main
+  git -C "$PAYLOAD_DEPOT_DIR" fetch origin main
+  git -C "$PAYLOAD_DEPOT_DIR" reset --hard origin/main
 
   local after
-  after=$(git -C "$RIG_DIR" rev-parse HEAD)
+  after=$(git -C "$PAYLOAD_DEPOT_DIR" rev-parse HEAD)
 
   if [[ "$before" == "$after" ]]; then
     log "Already up to date."
   else
-    ok "Upgraded $(git -C "$RIG_DIR" rev-parse --short "$before") → $(git -C "$RIG_DIR" rev-parse --short "$after")"
-    git -C "$RIG_DIR" log --oneline "${before}..${after}"
+    ok "Upgraded $(git -C "$PAYLOAD_DEPOT_DIR" rev-parse --short "$before") → $(git -C "$PAYLOAD_DEPOT_DIR" rev-parse --short "$after")"
+    git -C "$PAYLOAD_DEPOT_DIR" log --oneline "${before}..${after}"
   fi
 
   if [[ -d ".git" ]]; then
@@ -158,7 +158,7 @@ cmd_upgrade() {
     # Run the freshly-pulled script as a subprocess so we use the latest
     # cmd_update — not the old version loaded into this bash process's memory.
     # update never touches user config files, so no --force is needed.
-    bash "$RIG_DIR/rig-stage" update
+    bash "$PAYLOAD_DEPOT_DIR/payload-depot" update
   else
     skip "Project update (not inside a project directory)"
   fi
@@ -180,9 +180,9 @@ cmd_update() {
     exit 2
   fi
 
-  local adapter_dir="$RIG_DIR/targets/$target"
+  local adapter_dir="$PAYLOAD_DEPOT_DIR/targets/$target"
   if [[ ! -f "$adapter_dir/adapter.sh" ]]; then
-    err "adapter.sh not found in $adapter_dir — run: rig-stage list-targets"
+    err "adapter.sh not found in $adapter_dir — run: payload-depot list-targets"
     exit 1
   fi
 
@@ -196,24 +196,24 @@ cmd_update() {
   mkdir -p "$SKILL_INSTALL_PATH"
 
   local agent_count=0
-  if compgen -G "$RIG_DIR/agents/*.md" > /dev/null 2>&1; then
-    agent_count=$(find "$RIG_DIR/agents" -name "*.md" | wc -l | tr -d ' ')
-    cp "$RIG_DIR/agents/"*.md "$AGENT_INSTALL_PATH/"
+  if compgen -G "$PAYLOAD_DEPOT_DIR/agents/*.md" > /dev/null 2>&1; then
+    agent_count=$(find "$PAYLOAD_DEPOT_DIR/agents" -name "*.md" | wc -l | tr -d ' ')
+    cp "$PAYLOAD_DEPOT_DIR/agents/"*.md "$AGENT_INSTALL_PATH/"
   fi
   ok "Agents updated  → $AGENT_INSTALL_PATH ($agent_count files)"
 
   local skill_count=0
-  skill_count=$(find "$RIG_DIR/skills" -name "SKILL.md" | wc -l | tr -d ' ')
+  skill_count=$(find "$PAYLOAD_DEPOT_DIR/skills" -name "SKILL.md" | wc -l | tr -d ' ')
   if [[ $skill_count -gt 0 ]]; then
     # Copy each skill folder preserving structure (exclude resources-only dirs)
-    find "$RIG_DIR/skills" -name "SKILL.md" | while IFS= read -r skill_file; do
-      rel_dir="${skill_file#$RIG_DIR/skills/}"
+    find "$PAYLOAD_DEPOT_DIR/skills" -name "SKILL.md" | while IFS= read -r skill_file; do
+      rel_dir="${skill_file#$PAYLOAD_DEPOT_DIR/skills/}"
       rel_dir="$(dirname "$rel_dir")"
       mkdir -p "$SKILL_INSTALL_PATH/$rel_dir"
       cp -r "$(dirname "$skill_file")/." "$SKILL_INSTALL_PATH/$rel_dir/"
     done
     # Copy registry (flat file at skills root)
-    [[ -f "$RIG_DIR/skills/registry.md" ]] && cp "$RIG_DIR/skills/registry.md" "$SKILL_INSTALL_PATH/"
+    [[ -f "$PAYLOAD_DEPOT_DIR/skills/registry.md" ]] && cp "$PAYLOAD_DEPOT_DIR/skills/registry.md" "$SKILL_INSTALL_PATH/"
   fi
   ok "Skills updated  → $SKILL_INSTALL_PATH ($skill_count skills)"
 
@@ -225,28 +225,28 @@ cmd_update() {
   _ensure_gitignore_entries
 
   adapter_post_install
-  # adapter_post_install already clears .rig-verified; make explicit here too
-  rm -f ".rig-verified"
+  # adapter_post_install already clears .payload-depot-verified; make explicit here too
+  rm -f ".payload-depot-verified"
 
   log "Done. $agent_count agents, $skill_count skills updated."
 }
 
 cmd_list() {
   echo "Agents:"
-  for f in "$RIG_DIR/agents/"*.md; do
+  for f in "$PAYLOAD_DEPOT_DIR/agents/"*.md; do
     [[ -f "$f" ]] && echo "  $(basename "$f" .md)"
   done
   echo ""
   echo "Skills:"
   while IFS= read -r skill_file; do
-    rel="${skill_file#$RIG_DIR/skills/}"
+    rel="${skill_file#$PAYLOAD_DEPOT_DIR/skills/}"
     echo "  $(dirname "$rel")"
-  done < <(find "$RIG_DIR/skills" -name "SKILL.md" | sort)
+  done < <(find "$PAYLOAD_DEPOT_DIR/skills" -name "SKILL.md" | sort)
 }
 
 cmd_list_targets() {
   echo "Available targets:"
-  for adapter in "$RIG_DIR/targets/"*/adapter.sh; do
+  for adapter in "$PAYLOAD_DEPOT_DIR/targets/"*/adapter.sh; do
     [[ -f "$adapter" ]] || continue
     local target_dir
     target_dir="$(dirname "$adapter")"
@@ -262,7 +262,7 @@ cmd_list_targets() {
 }
 
 cmd_install() {
-  local target="claude-code" force=false dry_run=false no_hooks=false no_index=false
+  local target="claude-code" force=false dry_run=false no_hooks=false no_index=false openspec=false
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -271,6 +271,7 @@ cmd_install() {
       --dry-run)            dry_run=true; shift ;;
       --no-hooks)           no_hooks=true; shift ;;
       --no-codebase-index)  no_index=true; shift ;;
+      --openspec)           openspec=true; shift ;;
       *) err "Unknown flag: $1"; exit 1 ;;
     esac
   done
@@ -282,10 +283,10 @@ cmd_install() {
     exit 2
   fi
 
-  local adapter_dir="$RIG_DIR/targets/$target"
+  local adapter_dir="$PAYLOAD_DEPOT_DIR/targets/$target"
   if [[ ! -d "$adapter_dir" ]]; then
-    err "Target '$target' not found. Available targets: $(ls "$RIG_DIR/targets/" | tr '\n' ' ')"
-    err "Run \`rig-stage help\` for details."
+    err "Target '$target' not found. Available targets: $(ls "$PAYLOAD_DEPOT_DIR/targets/" | tr '\n' ' ')"
+    err "Run \`payload-depot help\` for details."
     exit 3
   fi
 
@@ -303,7 +304,7 @@ cmd_install() {
   # Dry-run wrapper
   maybe() {
     if $dry_run; then
-      echo "[rig-stage] [dry-run] $*"
+      echo "[payload-depot] [dry-run] $*"
     else
       "$@"
     fi
@@ -318,32 +319,32 @@ cmd_install() {
 
   # Step 4: Copy agents (always overwrite — versioned content)
   local agent_count=0
-  if compgen -G "$RIG_DIR/agents/*.md" > /dev/null 2>&1; then
-    agent_count=$(find "$RIG_DIR/agents" -name "*.md" | wc -l | tr -d ' ')
+  if compgen -G "$PAYLOAD_DEPOT_DIR/agents/*.md" > /dev/null 2>&1; then
+    agent_count=$(find "$PAYLOAD_DEPOT_DIR/agents" -name "*.md" | wc -l | tr -d ' ')
   fi
   if $dry_run; then
     log "[dry-run] Copy agents/ → $AGENT_INSTALL_PATH ($agent_count files)"
   else
     if [[ $agent_count -gt 0 ]]; then
-      cp "$RIG_DIR/agents/"*.md "$AGENT_INSTALL_PATH/"
+      cp "$PAYLOAD_DEPOT_DIR/agents/"*.md "$AGENT_INSTALL_PATH/"
     fi
     ok "Agents copied       → $AGENT_INSTALL_PATH ($agent_count files)"
   fi
 
   # Step 5: Copy skills (always overwrite, folder-based structure)
   local skill_count=0
-  skill_count=$(find "$RIG_DIR/skills" -name "SKILL.md" | wc -l | tr -d ' ')
+  skill_count=$(find "$PAYLOAD_DEPOT_DIR/skills" -name "SKILL.md" | wc -l | tr -d ' ')
   if $dry_run; then
     log "[dry-run] Copy skills/ → $SKILL_INSTALL_PATH ($skill_count skills)"
   else
     if [[ $skill_count -gt 0 ]]; then
-      find "$RIG_DIR/skills" -name "SKILL.md" | while IFS= read -r skill_file; do
-        rel_dir="${skill_file#$RIG_DIR/skills/}"
+      find "$PAYLOAD_DEPOT_DIR/skills" -name "SKILL.md" | while IFS= read -r skill_file; do
+        rel_dir="${skill_file#$PAYLOAD_DEPOT_DIR/skills/}"
         rel_dir="$(dirname "$rel_dir")"
         mkdir -p "$SKILL_INSTALL_PATH/$rel_dir"
         cp -r "$(dirname "$skill_file")/." "$SKILL_INSTALL_PATH/$rel_dir/"
       done
-      [[ -f "$RIG_DIR/skills/registry.md" ]] && cp "$RIG_DIR/skills/registry.md" "$SKILL_INSTALL_PATH/"
+      [[ -f "$PAYLOAD_DEPOT_DIR/skills/registry.md" ]] && cp "$PAYLOAD_DEPOT_DIR/skills/registry.md" "$SKILL_INSTALL_PATH/"
     fi
     ok "Skills copied        → $SKILL_INSTALL_PATH ($skill_count skills)"
   fi
@@ -381,13 +382,13 @@ cmd_install() {
     log "[dry-run] Copy session/HANDOFF.md.template    → ./HANDOFF.md (skip if exists)"
     log "[dry-run] Copy session/DECISIONS.md.template  → ./DECISIONS.md (skip if exists)"
   else
-    cp "$RIG_DIR/session/SCRATCHPAD.md.template" "./SCRATCHPAD.md"
+    cp "$PAYLOAD_DEPOT_DIR/session/SCRATCHPAD.md.template" "./SCRATCHPAD.md"
     ok "Session template     → ./SCRATCHPAD.md (overwritten)"
     for persistent in HANDOFF.md DECISIONS.md; do
       if [[ -f "./$persistent" ]]; then
         skip "./$persistent (already exists — session history preserved)"
       else
-        cp "$RIG_DIR/session/$persistent.template" "./$persistent"
+        cp "$PAYLOAD_DEPOT_DIR/session/$persistent.template" "./$persistent"
         ok "Session template     → ./$persistent (new)"
       fi
     done
@@ -406,7 +407,7 @@ cmd_install() {
   elif $dry_run; then
     log "[dry-run] Install .git/hooks/pre-commit"
   else
-    cp "$RIG_DIR/hooks/pre-commit" ".git/hooks/pre-commit"
+    cp "$PAYLOAD_DEPOT_DIR/hooks/pre-commit" ".git/hooks/pre-commit"
     chmod +x ".git/hooks/pre-commit"
     ok "Git hook installed   → .git/hooks/pre-commit"
   fi
@@ -417,14 +418,14 @@ cmd_install() {
   elif $dry_run; then
     log "[dry-run] Run ccindex init"
   else
-    local cb_install="$RIG_DIR/codebase-context/install.sh"
+    local cb_install="$PAYLOAD_DEPOT_DIR/codebase-context/install.sh"
     if [[ -x "$cb_install" ]]; then
       "$cb_install" || { err "codebase-context install failed"; exit 4; }
     fi
     if command -v ccindex &>/dev/null; then
       # Pipe answers to ccindex's two interactive prompts:
       #   1. "Add repo map reference to CLAUDE.md?" → y
-      #   2. "Install git post-commit hook?"        → n (Rig manages its own hook)
+      #   2. "Install git post-commit hook?"        → n (Loadout Depot manages its own hook)
       printf "y\nn\n" | ccindex init || { err "ccindex init failed (exit $?)"; exit 4; }
       ok "Codebase index       → initialised (.codebase-context/)"
     else
@@ -436,7 +437,38 @@ cmd_install() {
   # Step 11: adapter post-install
   $dry_run || adapter_post_install
 
+  # Step 12: OpenSpec init (optional)
+  if [[ "$openspec" == "true" ]]; then
+    $dry_run || cmd_openspec_init
+    $dry_run && log "[dry-run] Run openspec-init"
+  fi
+
   log "Done. $agent_count agents, $skill_count skills, ${#CONFIG_FILES[@]} config files, 3 session templates."
+}
+
+cmd_openspec_init() {
+  local project_root="$PWD"
+  local openspec_dir="$project_root/openspec"
+
+  mkdir -p "$openspec_dir/specs"
+  mkdir -p "$openspec_dir/changes/archive"
+  log "Created openspec/ directory tree"
+
+  local config="$openspec_dir/config.yaml"
+  if [[ ! -f "$config" ]]; then
+    local template
+    template="$PAYLOAD_DEPOT_DIR/targets/claude-code/openspec/config.yaml.template"
+    if [[ -f "$template" ]]; then
+      cp "$template" "$config"
+      log "Created openspec/config.yaml from template"
+    else
+      log "Warning: config.yaml.template not found at $template — skipping config creation"
+    fi
+  else
+    log "openspec/config.yaml already exists — skipping"
+  fi
+
+  log "OpenSpec initialised at $openspec_dir"
 }
 
 # ── Dispatch ──────────────────────────────────────────────────────────────────
@@ -445,12 +477,13 @@ COMMAND="${1:-help}"
 shift || true
 
 case "$COMMAND" in
-  install)      cmd_install "$@" ;;
-  update)       cmd_update "$@" ;;
-  upgrade)      cmd_upgrade ;;
-  list)         cmd_list ;;
-  list-targets) cmd_list_targets ;;
-  version)      cmd_version ;;
+  install)        cmd_install "$@" ;;
+  update)         cmd_update "$@" ;;
+  upgrade)        cmd_upgrade ;;
+  list)           cmd_list ;;
+  list-targets)   cmd_list_targets ;;
+  openspec-init)  cmd_openspec_init ;;
+  version)        cmd_version ;;
   help|--help|-h) cmd_help ;;
   *) err "Unknown command: $COMMAND"; exit 1 ;;
 esac

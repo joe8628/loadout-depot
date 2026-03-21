@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Rig post-install health check
-# Installed to .claude/hooks/rig-health-check.sh by rig-stage.
+# Loadout Depot post-install health check
+# Installed to .claude/hooks/payload-depot-health-check.sh by payload-depot.
 #
 # Runs automatically on the first session prompt after install/upgrade
-# (when .rig-verified is absent). On full pass, writes .rig-verified
+# (when .payload-depot-verified is absent). On full pass, writes .payload-depot-verified
 # so future session starts skip this check.
 #
-# Run manually at any time: bash .claude/hooks/rig-health-check.sh
+# Run manually at any time: bash .claude/hooks/payload-depot-health-check.sh
 
 set -uo pipefail
 
-MARKER=".rig-verified"
+MARKER=".payload-depot-verified"
 PASS=0
 FAIL=0
 
@@ -50,7 +50,7 @@ check_not_contains() {
   fi
 }
 
-echo "[rig] Running post-install health check..."
+echo "[payload-depot] Running post-install health check..."
 echo ""
 
 # ── File existence ─────────────────────────────────────────────────────────────
@@ -65,8 +65,8 @@ check_dir  "agents dir"                   ".claude/agents"
 check_dir  "skills dir"                   ".claude/skills"
 check_file "session-start.sh"             ".claude/hooks/session-start.sh"
 check_file "session-end.sh"               ".claude/hooks/session-end.sh"
-check_file "rig-health-check.sh"          ".claude/hooks/rig-health-check.sh"
-check_file "rig-skill-check.sh"           ".claude/hooks/rig-skill-check.sh"
+check_file "payload-depot-health-check.sh"          ".claude/hooks/payload-depot-health-check.sh"
+check_file "payload-depot-skill-check.sh"           ".claude/hooks/payload-depot-skill-check.sh"
 check_file "skills registry"              ".claude/skills/registry.md"
 check_file "pre-commit hook"              ".git/hooks/pre-commit"
 
@@ -75,7 +75,7 @@ echo ""
 echo "-- permissions --"
 check_exec "session-start.sh executable"  ".claude/hooks/session-start.sh"
 check_exec "session-end.sh executable"   ".claude/hooks/session-end.sh"
-check_exec "rig-skill-check.sh executable" ".claude/hooks/rig-skill-check.sh"
+check_exec "payload-depot-skill-check.sh executable" ".claude/hooks/payload-depot-skill-check.sh"
 check_exec "pre-commit executable"       ".git/hooks/pre-commit"
 
 # ── CLAUDE.md content ──────────────────────────────────────────────────────────
@@ -101,7 +101,7 @@ check_contains "session-end.sh wired"   ".claude/settings.json"  "session-end.sh
 echo ""
 echo "-- .gitignore --"
 check_contains "SCRATCHPAD.md gitignored"  ".gitignore"  "SCRATCHPAD.md"
-check_contains ".rig-verified gitignored"  ".gitignore"  ".rig-verified"
+check_contains ".payload-depot-verified gitignored"  ".gitignore"  ".payload-depot-verified"
 
 # ── Agent count ────────────────────────────────────────────────────────────────
 echo ""
@@ -113,18 +113,18 @@ else
   fail "agents: expected >=9, got $agent_count"
 fi
 
-# ── Skill check (delegates to rig-skill-check.sh) ──────────────────────────────
-if bash ".claude/hooks/rig-skill-check.sh" > /dev/null 2>&1; then
-  ok "skills valid (rig-skill-check passed)"
+# ── Skill check (delegates to payload-depot-skill-check.sh) ──────────────────────────────
+if bash ".claude/hooks/payload-depot-skill-check.sh" > /dev/null 2>&1; then
+  ok "skills valid (payload-depot-skill-check passed)"
 else
-  fail "skills: rig-skill-check.sh failed — run: bash .claude/hooks/rig-skill-check.sh"
+  fail "skills: payload-depot-skill-check.sh failed — run: bash .claude/hooks/payload-depot-skill-check.sh"
 fi
 
 # ── Session hook behaviour ─────────────────────────────────────────────────────
 echo ""
 echo "-- session hooks --"
 today=$(date +%Y-%m-%d)
-export RIG_HEALTH_CHECK_ACTIVE=1
+export PAYLOAD_DEPOT_HEALTH_CHECK_ACTIVE=1
 bash ".claude/hooks/session-start.sh" 2>/dev/null || true
 if grep -qF "$today" SCRATCHPAD.md 2>/dev/null; then
   ok "session-start writes today's date to SCRATCHPAD.md"
@@ -134,15 +134,15 @@ fi
 
 # ── Result ─────────────────────────────────────────────────────────────────────
 echo ""
-echo "[rig] Health check: $PASS passed, $FAIL failed"
+echo "[payload-depot] Health check: $PASS passed, $FAIL failed"
 
 if [[ $FAIL -eq 0 ]]; then
-  printf "RIG_VERIFIED=true\nTIMESTAMP=%s\nCHECKS=%d passed\n" \
+  printf "PAYLOAD_DEPOT_VERIFIED=true\nTIMESTAMP=%s\nCHECKS=%d passed\n" \
     "$(date +%Y-%m-%dT%H:%M:%S)" "$PASS" > "$MARKER"
-  echo "[rig] ✓ All checks passed — .rig-verified written (skipped on future session starts)"
-  echo "[rig]   To re-run: rm .rig-verified && bash .claude/hooks/rig-health-check.sh"
+  echo "[payload-depot] ✓ All checks passed — .payload-depot-verified written (skipped on future session starts)"
+  echo "[payload-depot]   To re-run: rm .payload-depot-verified && bash .claude/hooks/payload-depot-health-check.sh"
 else
-  echo "[rig] ✗ $FAIL check(s) failed — fix then re-run: bash .claude/hooks/rig-health-check.sh"
-  echo "[rig]   Or reinstall: rig-stage install --force"
+  echo "[payload-depot] ✗ $FAIL check(s) failed — fix then re-run: bash .claude/hooks/payload-depot-health-check.sh"
+  echo "[payload-depot]   Or reinstall: payload-depot install --force"
   exit 1
 fi

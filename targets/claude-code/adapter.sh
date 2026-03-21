@@ -22,14 +22,14 @@ adapter_pre_install() {
 }
 
 adapter_post_install() {
-  cp "$RIG_DIR/targets/claude-code/session-start.sh"    ".claude/hooks/session-start.sh"
+  cp "$PAYLOAD_DEPOT_DIR/targets/claude-code/session-start.sh"    ".claude/hooks/session-start.sh"
   chmod +x ".claude/hooks/session-start.sh"
-  cp "$RIG_DIR/targets/claude-code/session-end.sh"      ".claude/hooks/session-end.sh"
+  cp "$PAYLOAD_DEPOT_DIR/targets/claude-code/session-end.sh"      ".claude/hooks/session-end.sh"
   chmod +x ".claude/hooks/session-end.sh"
-  cp "$RIG_DIR/targets/claude-code/rig-health-check.sh" ".claude/hooks/rig-health-check.sh"
-  chmod +x ".claude/hooks/rig-health-check.sh"
-  cp "$RIG_DIR/targets/claude-code/rig-skill-check.sh"  ".claude/hooks/rig-skill-check.sh"
-  chmod +x ".claude/hooks/rig-skill-check.sh"
+  cp "$PAYLOAD_DEPOT_DIR/targets/claude-code/payload-depot-health-check.sh" ".claude/hooks/payload-depot-health-check.sh"
+  chmod +x ".claude/hooks/payload-depot-health-check.sh"
+  cp "$PAYLOAD_DEPOT_DIR/targets/claude-code/payload-depot-skill-check.sh"  ".claude/hooks/payload-depot-skill-check.sh"
+  chmod +x ".claude/hooks/payload-depot-skill-check.sh"
   # Clear the verified marker so the health check runs on the next session start
-  rm -f ".rig-verified"
+  rm -f ".payload-depot-verified"
 }

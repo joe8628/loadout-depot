@@ -4,7 +4,7 @@
 @AGENTS.md
 @.claude/skills/registry.md
 
-# Rig
+# Loadout Depot
 
 **Language/toolchain:** Bash + bats/bats-core
 **One-line description:** Bootstrap AI-assisted coding sessions with a single CLI command
@@ -24,7 +24,7 @@ the skill with the `Skill` tool before responding.
 
 To add a skill:
 1. Write a `.md` file in `.claude/skills/` with frontmatter (`version`, `updated`) and sections (`## Purpose`, `## Trigger`, `## Process`)
-2. Run `bash .claude/hooks/rig-skill-check.sh` — it detects unregistered skills
+2. Run `bash .claude/hooks/payload-depot-skill-check.sh` — it detects unregistered skills
 3. Add an entry to `.claude/skills/registry.md` following the existing format
 
 ## Agent Registry

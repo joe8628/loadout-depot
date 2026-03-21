@@ -1,10 +1,10 @@
-# Rig — Project Brief
+# Loadout Depot — Project Brief
 
-**Rig** is a CLI-installable scaffold that bootstraps any new project with a predefined set of AI coding agents, skills, config templates, and a context manager. A single command (`rig install`) copies everything into a target project and has it ready to work in seconds.
+**Loadout Depot** is a CLI-installable scaffold that bootstraps any new project with a predefined set of AI coding agents, skills, config templates, and a context manager. A single command (`rig install`) copies everything into a target project and has it ready to work in seconds.
 
 ## Goal
 
-Build and maintain the Rig scaffold repository so that any new project — regardless of language or LLM tooling — can be bootstrapped consistently and immediately. Rig is LLM-agnostic by design: agent and skill content lives once as canonical `.md` files; tool-specific wiring is handled by target adapters.
+Build and maintain the Loadout Depot scaffold repository so that any new project — regardless of language or LLM tooling — can be bootstrapped consistently and immediately. Loadout Depot is LLM-agnostic by design: agent and skill content lives once as canonical `.md` files; tool-specific wiring is handled by target adapters.
 
 ---
 
@@ -60,7 +60,7 @@ rig/
 ├── hooks/
 │   └── pre-commit
 ├── context-manager/               ← existing submodule or install hook
-└── rig-stage                      ← main CLI entrypoint
+└── payload-depot                      ← main CLI entrypoint
 ```
 
 ---
@@ -144,9 +144,9 @@ Structured output file written by each agent when it finishes, read by the next 
 
 ---
 
-## `rig-stage` CLI
+## `payload-depot` CLI
 
-The main entrypoint. Named `rig-stage` to avoid collision with the system `rig` apt package. Supports a `--target` flag for multi-LLM installs. Defaults to `claude-code`. Install globally with `make install`.
+The main entrypoint. Named `payload-depot` to avoid collision with the system `rig` apt package. Supports a `--target` flag for multi-LLM installs. Defaults to `claude-code`. Install globally with `make install`.
 
 ### Behaviour (unconditional copy with safe exceptions)
 
@@ -162,15 +162,15 @@ The main entrypoint. Named `rig-stage` to avoid collision with the system `rig` 
 
 ```bash
 # Install for Claude Code (default)
-./rig-stage install
+./payload-depot install
 
 # Install for a specific target
-./rig-stage install --target claude-code
-./rig-stage install --target openai       # future
-./rig-stage install --target gemini       # future
+./payload-depot install --target claude-code
+./payload-depot install --target openai       # future
+./payload-depot install --target gemini       # future
 
 # Force overwrite of existing config files
-./rig-stage install --force
+./payload-depot install --force
 ```
 
 ---
@@ -217,7 +217,7 @@ Initialised via `ccindex init` (full index) or `ccindex watch` (incremental on f
 
 ## Multi-LLM Portability
 
-Rig is designed so that agent and skill *content* is canonical and lives once. Tool-specific *wiring* — install paths, config formats, invocation conventions — lives in `targets/`.
+Loadout Depot is designed so that agent and skill *content* is canonical and lives once. Tool-specific *wiring* — install paths, config formats, invocation conventions — lives in `targets/`.
 
 ### What is portable as-is
 
@@ -266,7 +266,7 @@ Each directory under `targets/` must contain:
 6. `debugger` agent
 7. `pre-commit` hook
 8. `commit-msg` skill
-9. `rig-stage` CLI entrypoint with `install` command
+9. `payload-depot` CLI entrypoint with `install` command
 10. `SCRATCHPAD.md` and `DECISIONS.md` templates
 11. Remaining agents and skills
 12. Prompt versioning headers on all agent files

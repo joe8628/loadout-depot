@@ -61,7 +61,7 @@ The original plan (2026-03-19) proposed writing 8 SKILL.md files by hand for `op
 
 1. **Duplicates work OpenSpec already does.** `openspec init --tools claude` generates all these skills from its own versioned templates.
 2. **Creates a maintenance burden.** Every time OpenSpec releases a new version, our hand-written skills go stale. OpenSpec already solves this with `openspec update`.
-3. **Would conflict with OpenSpec-generated files.** If a user runs both `loadout-depot install` and `openspec init`, they'd get conflicting skill files.
+3. **Would conflict with OpenSpec-generated files.** If a user runs both `payload-depot install` and `openspec init`, they'd get conflicting skill files.
 4. **Misses the CLI layer.** `openspec archive`, `openspec validate` etc. are CLI commands that must be run by the user — they can't be replaced by a SKILL.md.
 
 ---
@@ -73,11 +73,11 @@ Loadout Depot's role is environment bootstrapping. For OpenSpec, that means:
 ### Option A — Thin wrapper (recommended starting point)
 
 1. Add `openspec` CLI to `env-setup` skill as a required dependency
-2. Add `loadout-depot openspec-init` as a thin wrapper that:
+2. Add `payload-depot openspec-init` as a thin wrapper that:
    - Checks `openspec` CLI is installed (error with install instructions if not)
    - Runs `openspec init --tools claude` in the project directory
-3. Register the OpenSpec-generated skills in `registry.md` so `loadout-depot-skill-check.sh` doesn't flag them as unregistered
-4. Wire `openspec update` into `loadout-depot update` so skills stay current
+3. Register the OpenSpec-generated skills in `registry.md` so `payload-depot-skill-check.sh` doesn't flag them as unregistered
+4. Wire `openspec update` into `payload-depot update` so skills stay current
 
 ### Option B — Self-contained (no openspec CLI dependency)
 
@@ -87,7 +87,7 @@ Bundle OpenSpec's skill templates directly into Loadout Depot (copy them from th
 
 ### Option C — Delegate entirely
 
-Document that users should run `openspec init --tools claude` themselves after `loadout-depot install`. No Loadout Depot integration at all — just a note in the README.
+Document that users should run `openspec init --tools claude` themselves after `payload-depot install`. No Loadout Depot integration at all — just a note in the README.
 
 ---
 
@@ -97,11 +97,11 @@ Document that users should run `openspec init --tools claude` themselves after `
 
 2. **Dependency model:** If Option A — should `openspec` be a hard dependency (install fails without it) or soft (warn and skip)? The `ccindex` integration uses a soft-skip pattern — is that the right model here too?
 
-3. **Profile selection:** OpenSpec has two profiles — `core` (4 commands: propose, explore, apply, archive) and `custom` (full suite including ff, continue, verify, sync, bulk-archive, onboard). Which should `loadout-depot openspec-init` configure by default?
+3. **Profile selection:** OpenSpec has two profiles — `core` (4 commands: propose, explore, apply, archive) and `custom` (full suite including ff, continue, verify, sync, bulk-archive, onboard). Which should `payload-depot openspec-init` configure by default?
 
 4. **Skill registration:** OpenSpec installs skills with names like `openspec-propose` (flat, with prefix). Loadout Depot's registry uses `category/name` (e.g., `openspec/propose`). Do we register them as-is under their OpenSpec names, or rename?
 
-5. **Skill-check compatibility:** OpenSpec manages its own skill files and can overwrite them with `openspec update`. Should `loadout-depot-skill-check.sh` validate OpenSpec skills (and potentially conflict with OpenSpec's own validation), or explicitly exclude them?
+5. **Skill-check compatibility:** OpenSpec manages its own skill files and can overwrite them with `openspec update`. Should `payload-depot-skill-check.sh` validate OpenSpec skills (and potentially conflict with OpenSpec's own validation), or explicitly exclude them?
 
 6. **config.yaml:** OpenSpec's `config.yaml` injects project context into all planning prompts. Should Loadout Depot pre-populate it with project metadata (name, language, description) after running `openspec init`? This would be analogous to F-001 (CLAUDE.md placeholder substitution).
 

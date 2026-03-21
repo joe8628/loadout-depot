@@ -3,6 +3,10 @@ version: 1.0.0
 updated: 2026-03-15
 changelog:
   - 1.0.0: initial version
+skill_type: technique
+hierarchy_level: 3
+parent_skills: []
+uses_skills: []
 ---
 
 # env-setup

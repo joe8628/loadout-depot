@@ -1,21 +1,36 @@
 ---
-name: socratic-mvp
-category: architecture
-hierarchy_level: 2
+version: 1.0.0
+updated: 2026-03-19
+changelog:
+  - 1.0.0: initial version
 skill_type: methodology
-parent_skills: [lich, phylactery-lich]
-child_skills: []
-priority: critical
-applies_to:
-  - mvp-discovery
-  - domain-modeling
-  - architectural-requirements
-  - stakeholder-interviews
-tags: [socratic, mvp, discovery, domain, requirements, validation]
-metadata:
-  version: 1.0.0
-  author: SkullRender AI
-  created: 2026-02-06
+hierarchy_level: 1
+parent_skills:
+  - architecture/lich
+  - architecture/phylactery-lich
+uses_skills: []
+---
+
+# architecture/socratic-mvp
+
+## Purpose
+
+Socratic dialogue methodology for extracting MVP scope, domain boundaries, and architectural decisions through 13 structured questions — prevents over-engineering before design begins.
+
+## Trigger
+
+- At the start of any MVP or domain modeling session
+- User asks to "define MVP", "scope the MVP", "what are we building", or "socratic questions"
+- Invoked by architecture/lich or architecture/phylactery-lich before generating architectural outputs
+
+## Language Support
+
+Language-agnostic. Operates through structured dialogue — no source code involved.
+
+## Process
+
+Run three sequential questioning phases: MVP Core (questions 1–5) → Domain Validation (questions 6–9) → Architecture Constraints (questions 10–13). Validate outputs against the checklist after all 13 questions.
+
 ---
 
 # Socratic MVP Discovery (Phylactery Lich)

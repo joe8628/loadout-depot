@@ -1,7 +1,7 @@
 # Skills Registry
 
 <!-- @imported in CLAUDE.md for auto-discovery -->
-<!-- loadout-depot-skill-check.sh reads this to detect unregistered or missing skills -->
+<!-- payload-depot-skill-check.sh reads this to detect unregistered or missing skills -->
 <!-- Format: one ## <name> block per skill. Name must match the folder path relative to skills/. -->
 
 ## tdd

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="loadout-depot.png" alt="Loadout Depot" width="600"/>
+  <img src="payload-depot.png" alt="Loadout Depot" width="600"/>
 
   <h1>Loadout Depot</h1>
   <p>Bootstrap any project with Claude Code agents, skills, session templates, and a codebase context index — in a single command.</p>
@@ -7,7 +7,7 @@
   ![Version](https://img.shields.io/badge/version-1.1.0-blue)
   ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-lightgrey)
   ![Shell](https://img.shields.io/badge/shell-bash%205%2B-green)
-  ![License](https://img.shields.io/github/license/joe8628/loadout-depot)
+  ![License](https://img.shields.io/github/license/joe8628/payload-depot)
 </div>
 
 ---
@@ -17,15 +17,15 @@
 **One-liner (recommended)**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/joe8628/loadout-depot/main/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/joe8628/payload-depot/main/bootstrap.sh | bash
 ```
 
-Clones the repo to `~/.rig` and symlinks `loadout-depot` into `~/.local/bin`. Re-running updates to the latest version.
+Clones the repo to `~/.rig` and symlinks `payload-depot` into `~/.local/bin`. Re-running updates to the latest version.
 
 **Manual**
 
 ```bash
-git clone https://github.com/joe8628/loadout-depot.git ~/.rig
+git clone https://github.com/joe8628/payload-depot.git ~/.rig
 cd ~/.rig && make install
 ```
 
@@ -45,7 +45,7 @@ Add that line to your `~/.bashrc` or `~/.zshrc`.
 
 ```bash
 cd ~/my-project
-loadout-depot install
+payload-depot install
 ```
 
 ---
@@ -53,16 +53,16 @@ loadout-depot install
 ## Usage
 
 ```bash
-loadout-depot install                        # Install for Claude Code (default)
-loadout-depot install --target claude-code   # Explicit target
-loadout-depot install --force                # Overwrite existing config files
-loadout-depot install --dry-run              # Preview without writing files
-loadout-depot install --no-hooks             # Skip pre-commit hook
-loadout-depot install --no-codebase-index    # Skip ccindex init
+payload-depot install                        # Install for Claude Code (default)
+payload-depot install --target claude-code   # Explicit target
+payload-depot install --force                # Overwrite existing config files
+payload-depot install --dry-run              # Preview without writing files
+payload-depot install --no-hooks             # Skip pre-commit hook
+payload-depot install --no-codebase-index    # Skip ccindex init
 
-loadout-depot list      # List available agents and skills
-loadout-depot version   # Print version
-loadout-depot help      # Print usage
+payload-depot list      # List available agents and skills
+payload-depot version   # Print version
+payload-depot help      # Print usage
 ```
 
 ---

@@ -41,9 +41,9 @@ Concrete steps, files to change, and any known constraints.
 **Source:** Spec §5.3 vs §12 contradiction; discovered 2026-03-18
 
 #### Problem
-`loadout-depot install` (and therefore `loadout-depot upgrade`) always overwrites all three session template files — `SCRATCHPAD.md`, `HANDOFF.md`, and `DECISIONS.md` — by copying the blank templates over them unconditionally (loadout-depot lines 191–200).
+`payload-depot install` (and therefore `payload-depot upgrade`) always overwrites all three session template files — `SCRATCHPAD.md`, `HANDOFF.md`, and `DECISIONS.md` — by copying the blank templates over them unconditionally (payload-depot lines 191–200).
 
-This is correct for `SCRATCHPAD.md`, which is ephemeral and gitignored. It is destructive for `HANDOFF.md` and `DECISIONS.md`, which spec §12 explicitly states are committed to git and accumulate across sessions as the cross-session context persistence layer. Running `loadout-depot upgrade` silently wipes the entire agent handoff history.
+This is correct for `SCRATCHPAD.md`, which is ephemeral and gitignored. It is destructive for `HANDOFF.md` and `DECISIONS.md`, which spec §12 explicitly states are committed to git and accumulate across sessions as the cross-session context persistence layer. Running `payload-depot upgrade` silently wipes the entire agent handoff history.
 
 The spec contradicts itself: §5.3 groups all three as "always overwrite", while §12 and §14 treat HANDOFF.md and DECISIONS.md as persistent committed files.
 
@@ -55,7 +55,7 @@ The spec contradicts itself: §5.3 groups all three as "always overwrite", while
 | `DECISIONS.md` | Skip if exists — accumulates across sessions |
 
 #### Implementation notes
-- In `loadout-depot` step 7, split the session template loop into two cases: always-overwrite for `SCRATCHPAD.md.template`, skip-if-exists for `HANDOFF.md.template` and `DECISIONS.md.template`.
+- In `payload-depot` step 7, split the session template loop into two cases: always-overwrite for `SCRATCHPAD.md.template`, skip-if-exists for `HANDOFF.md.template` and `DECISIONS.md.template`.
 - Apply the same `[[ -f "$dest" ]]` guard used for config files (step 6).
 - `--force` should not override this — HANDOFF.md and DECISIONS.md should never be silently wiped, even with `--force`. Document this explicitly.
 - Update spec §5.3 table to reflect the corrected per-file behaviour.
@@ -72,10 +72,10 @@ The spec contradicts itself: §5.3 groups all three as "always overwrite", while
 **Source:** Spec §6.4; discovered during session 2026-03-18
 
 #### Problem
-`loadout-depot install` copies `CLAUDE.md.template` to `CLAUDE.md` with a plain `cp`, leaving all `<...>` placeholders verbatim. The project name, language/toolchain, and description are never filled in. Users must edit the file manually after every fresh install.
+`payload-depot install` copies `CLAUDE.md.template` to `CLAUDE.md` with a plain `cp`, leaving all `<...>` placeholders verbatim. The project name, language/toolchain, and description are never filled in. Users must edit the file manually after every fresh install.
 
 #### Expected behaviour
-After copying the template, `loadout-depot install` detects project metadata and substitutes known placeholders before writing the file:
+After copying the template, `payload-depot install` detects project metadata and substitutes known placeholders before writing the file:
 
 | Placeholder | Detection strategy |
 |---|---|
@@ -86,14 +86,14 @@ After copying the template, `loadout-depot install` detects project metadata and
 Placeholders that cannot be auto-detected are left as-is so the user knows what still needs filling.
 
 #### Implementation notes
-- Add a `substitute_placeholders()` function in `loadout-depot` that runs `sed -i` passes after the `cp` in step 6 of the install sequence.
+- Add a `substitute_placeholders()` function in `payload-depot` that runs `sed -i` passes after the `cp` in step 6 of the install sequence.
 - Reuse the language detection logic already in `hooks/pre-commit` — extract it to a shared helper or duplicate the three-condition check.
 - Only substitute in `CLAUDE.md`; other config templates (`CONVENTIONS.md`, `AGENTS.md`) have no auto-detectable placeholders.
 - Must not run in `--dry-run` mode (print what would be substituted instead).
 
 ---
 
-### F-002 — `loadout-depot list-targets` subcommand
+### F-002 — `payload-depot list-targets` subcommand
 
 **Status:** done
 **Priority:** P2
@@ -101,10 +101,10 @@ Placeholders that cannot be auto-detected are left as-is so the user knows what 
 **Source:** Spec §7.3
 
 #### Problem
-The spec states that adding a new target requires adding it to the `loadout-depot list-targets` output, but the subcommand does not exist. The current `loadout-depot list` only shows agents and skills. There is no way to discover available targets from the CLI.
+The spec states that adding a new target requires adding it to the `payload-depot list-targets` output, but the subcommand does not exist. The current `payload-depot list` only shows agents and skills. There is no way to discover available targets from the CLI.
 
 #### Expected behaviour
-`loadout-depot list-targets` prints all directories under `targets/` that contain an `adapter.sh`, along with their `ADAPTER_NAME` and a one-line description sourced from `targets/<name>/README.md`.
+`payload-depot list-targets` prints all directories under `targets/` that contain an `adapter.sh`, along with their `ADAPTER_NAME` and a one-line description sourced from `targets/<name>/README.md`.
 
 ```
 Available targets:
@@ -114,14 +114,14 @@ Available targets:
 ```
 
 #### Implementation notes
-- Add `cmd_list_targets()` in `loadout-depot` and wire it to the `list-targets` case in the dispatch block.
+- Add `cmd_list_targets()` in `payload-depot` and wire it to the `list-targets` case in the dispatch block.
 - Source each `adapter.sh` in a subshell to read `ADAPTER_NAME` safely without polluting the parent environment.
 - Extract the description from the first non-heading line of the target's `README.md`.
 - Update `usage()` to document the new subcommand.
 
 ---
 
-### F-003 — `loadout-depot update` — refresh agents/skills without clobbering user config
+### F-003 — `payload-depot update` — refresh agents/skills without clobbering user config
 
 **Status:** done
 **Priority:** P2
@@ -129,22 +129,22 @@ Available targets:
 **Source:** Spec §15 open questions
 
 #### Problem
-`loadout-depot upgrade` pulls the latest Loadout Depot source and then calls `install --force`, which overwrites user-edited config files (`CLAUDE.md`, `CONVENTIONS.md`, `AGENTS.md`, `settings.json`). There is no way to pull updated agent and skill prompts without risking loss of project-specific customisations.
+`payload-depot upgrade` pulls the latest Loadout Depot source and then calls `install --force`, which overwrites user-edited config files (`CLAUDE.md`, `CONVENTIONS.md`, `AGENTS.md`, `settings.json`). There is no way to pull updated agent and skill prompts without risking loss of project-specific customisations.
 
 #### Expected behaviour
-`loadout-depot update` refreshes only the files that Loadout Depot owns and versions (agent `.md` files, skill `.md` files) while leaving all config files untouched regardless of `--force`.
+`payload-depot update` refreshes only the files that Loadout Depot owns and versions (agent `.md` files, skill `.md` files) while leaving all config files untouched regardless of `--force`.
 
 ```
-[loadout-depot] Updating agents and skills only (config files preserved)...
-[loadout-depot] ✓ Agents updated  → .claude/agents/ (9 files)
-[loadout-depot] ✓ Skills updated  → .claude/skills/ (10 files)
-[loadout-depot] ~ Skipped         → CLAUDE.md (user config — use install --force to overwrite)
+[payload-depot] Updating agents and skills only (config files preserved)...
+[payload-depot] ✓ Agents updated  → .claude/agents/ (9 files)
+[payload-depot] ✓ Skills updated  → .claude/skills/ (10 files)
+[payload-depot] ~ Skipped         → CLAUDE.md (user config — use install --force to overwrite)
 ```
 
 #### Implementation notes
-- Add `cmd_update()` in `loadout-depot` that runs steps 4–5 of the install sequence (copy agents and skills) but skips step 6 (config templates) unconditionally.
+- Add `cmd_update()` in `payload-depot` that runs steps 4–5 of the install sequence (copy agents and skills) but skips step 6 (config templates) unconditionally.
 - Accepts `--target` flag; defaults to `claude-code`.
-- `loadout-depot upgrade` should call `update` instead of `install --force` so that pulling a new Loadout Depot version does not destroy user config.
+- `payload-depot upgrade` should call `update` instead of `install --force` so that pulling a new Loadout Depot version does not destroy user config.
 
 ---
 
@@ -156,10 +156,10 @@ Available targets:
 **Source:** Spec §7; stub at `targets/openai/`
 
 #### Problem
-The `targets/openai/` directory contains only a `README.md` stub. No `adapter.sh` or config templates exist. `loadout-depot install --target openai` exits with error code 1 (missing `adapter.sh`).
+The `targets/openai/` directory contains only a `README.md` stub. No `adapter.sh` or config templates exist. `payload-depot install --target openai` exits with error code 1 (missing `adapter.sh`).
 
 #### Expected behaviour
-`loadout-depot install --target openai` fully installs agent and skill prompts adapted for the OpenAI Codex/Assistants tooling, with appropriate config file equivalents for that platform.
+`payload-depot install --target openai` fully installs agent and skill prompts adapted for the OpenAI Codex/Assistants tooling, with appropriate config file equivalents for that platform.
 
 #### Implementation notes
 - Requires research into OpenAI's equivalent of `CLAUDE.md`, agent invocation conventions, and tool permission config format.
@@ -176,10 +176,10 @@ The `targets/openai/` directory contains only a `README.md` stub. No `adapter.sh
 **Source:** Spec §7; stub at `targets/gemini/`
 
 #### Problem
-The `targets/gemini/` directory contains only a `README.md` stub. No `adapter.sh` or config templates exist. `loadout-depot install --target gemini` exits with error code 1 (missing `adapter.sh`).
+The `targets/gemini/` directory contains only a `README.md` stub. No `adapter.sh` or config templates exist. `payload-depot install --target gemini` exits with error code 1 (missing `adapter.sh`).
 
 #### Expected behaviour
-`loadout-depot install --target gemini` fully installs agent and skill prompts adapted for the Gemini CLI tooling.
+`payload-depot install --target gemini` fully installs agent and skill prompts adapted for the Gemini CLI tooling.
 
 #### Implementation notes
 - Same adapter interface contract as F-004.
@@ -242,7 +242,7 @@ On session start (before the user's first prompt is processed), a hook:
 
 ---
 
-### F-008 — OpenSpec: `loadout-depot openspec-init` wrapper
+### F-008 — OpenSpec: `payload-depot openspec-init` wrapper
 
 **Type:** feature
 **Status:** deferred
@@ -253,10 +253,10 @@ On session start (before the user's first prompt is processed), a hook:
 > ⚠️ **Implementation approach revised.** Original plan assumed Loadout Depot would scaffold the `openspec/` tree itself. After reviewing Fission-AI's docs, the OpenSpec CLI (`@fission-ai/openspec`) already handles this via `openspec init --tools claude`. Loadout Depot's role is a thin wrapper, not a reimplementation.
 
 #### Problem
-After `loadout-depot install`, users have no automated path to set up OpenSpec in their project. They must manually install the `openspec` CLI and run `openspec init --tools claude` themselves.
+After `payload-depot install`, users have no automated path to set up OpenSpec in their project. They must manually install the `openspec` CLI and run `openspec init --tools claude` themselves.
 
 #### Expected behaviour
-`loadout-depot openspec-init`:
+`payload-depot openspec-init`:
 1. Checks that the `openspec` CLI is installed (`openspec --version`). If not, prints install instructions and exits.
 2. Runs `openspec init --tools claude` in the current project directory.
 3. Optionally pre-populates `openspec/config.yaml` with project metadata (name, language) detected by the same logic used for CLAUDE.md substitution (F-001).
@@ -281,20 +281,20 @@ After `loadout-depot install`, users have no automated path to set up OpenSpec i
 > ⚠️ **Implementation approach revised.** Original plan assumed Loadout Depot would write these skills from scratch. After reviewing Fission-AI's docs, `openspec init --tools claude` generates all `/opsx:*` skills automatically into `.claude/skills/openspec-*/SKILL.md`. Loadout Depot should register them, not rewrite them.
 
 #### Problem
-After `openspec init --tools claude` runs, it installs skills like `.claude/skills/openspec-propose/SKILL.md`. The `loadout-depot-skill-check.sh` validator flags these as "unregistered" because they don't appear in `skills/registry.md`.
+After `openspec init --tools claude` runs, it installs skills like `.claude/skills/openspec-propose/SKILL.md`. The `payload-depot-skill-check.sh` validator flags these as "unregistered" because they don't appear in `skills/registry.md`.
 
 #### Expected behaviour
 `skills/registry.md` includes entries for all OpenSpec-generated skills (propose, explore, apply, archive — core profile minimum). The skill-check does not WARN about them.
 
 #### Implementation notes
 - Registry entries point at OpenSpec-generated paths (e.g., `openspec-propose/SKILL.md`), not hand-written files.
-- Alternatively, teach `loadout-depot-skill-check.sh` to exclude skills under a configurable prefix (e.g., `openspec-*`) from the "unregistered" warning.
+- Alternatively, teach `payload-depot-skill-check.sh` to exclude skills under a configurable prefix (e.g., `openspec-*`) from the "unregistered" warning.
 - Must be done after F-008 so we know the exact skill names OpenSpec generates.
 - Full open questions in `docs/superpowers/plans/2026-03-19-openspec-skills.md`.
 
 ---
 
-### F-010 — OpenSpec: wire `openspec update` into `loadout-depot update`
+### F-010 — OpenSpec: wire `openspec update` into `payload-depot update`
 
 **Type:** feature
 **Status:** deferred
@@ -305,10 +305,10 @@ After `openspec init --tools claude` runs, it installs skills like `.claude/skil
 > ⚠️ **Implementation approach revised.** F-010 through F-016 were originally individual skills to write by hand. All are now collapsed into this single integration feature.
 
 #### Problem
-`openspec update` refreshes the Claude Code skills after OpenSpec CLI upgrades. Users who run `loadout-depot update` to refresh their Loadout Depot skills will not automatically get updated OpenSpec skills.
+`openspec update` refreshes the Claude Code skills after OpenSpec CLI upgrades. Users who run `payload-depot update` to refresh their Loadout Depot skills will not automatically get updated OpenSpec skills.
 
 #### Expected behaviour
-`loadout-depot update` calls `openspec update` if the `openspec` CLI is installed, so OpenSpec skills stay current alongside Loadout Depot skills.
+`payload-depot update` calls `openspec update` if the `openspec` CLI is installed, so OpenSpec skills stay current alongside Loadout Depot skills.
 
 #### Implementation notes
 - Soft: skip silently if `openspec` is not installed.
@@ -328,7 +328,7 @@ After `openspec init --tools claude` runs, it installs skills like `.claude/skil
 The `env-setup` skill does not mention OpenSpec as an optional dependency. Users don't know they need Node.js ≥ 20.19 and `npm install -g @fission-ai/openspec` to use the `/opsx:*` workflow.
 
 #### Expected behaviour
-The `env-setup` skill includes an **Optional: OpenSpec** section documenting the install command and pointing to `loadout-depot openspec-init`.
+The `env-setup` skill includes an **Optional: OpenSpec** section documenting the install command and pointing to `payload-depot openspec-init`.
 
 #### Implementation notes
 - Node.js ≥ 20.19.0 is required by the OpenSpec CLI.
@@ -355,6 +355,6 @@ The `env-setup` skill includes an **Optional: OpenSpec** section documenting the
 | F-007 | feature | Session-start hook in `settings.json.template` | done | P0 | v1.1 |
 | F-008 | feature | OpenSpec: `openspec-init` wrapper subcommand | deferred | P1 | v1.3 |
 | F-009 | feature | OpenSpec: register generated skills in registry | deferred | P1 | v1.3 |
-| F-010 | feature | OpenSpec: wire `openspec update` into `loadout-depot update` | deferred | P2 | v1.3 |
+| F-010 | feature | OpenSpec: wire `openspec update` into `payload-depot update` | deferred | P2 | v1.3 |
 | F-011 | feature | OpenSpec: `env-setup` skill update for openspec dependency | deferred | P2 | v1.3 |
 | F-012–016 | feature | OpenSpec: hand-written opsx skills | retired | — | — |

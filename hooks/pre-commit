@@ -5,7 +5,7 @@
 
 set -uo pipefail
 
-PREFIX="[rig-stage:pre-commit]"
+PREFIX="[payload-depot:pre-commit]"
 
 log()  { echo "$PREFIX $*"; }
 warn() { echo "$PREFIX WARNING: $*" >&2; }
@@ -86,7 +86,7 @@ fi
 # Warn when code files are staged but HANDOFF.md has no entry for today.
 # This is a warning only — it never blocks the commit.
 STAGED=$(git diff --cached --name-only 2>/dev/null || true)
-if echo "$STAGED" | grep -qE '^(rig-stage|tests/|hooks/|targets/)'; then
+if echo "$STAGED" | grep -qE '^(payload-depot|tests/|hooks/|targets/)'; then
   today=$(date +%Y-%m-%d)
   if ! grep -qF "$today" HANDOFF.md 2>/dev/null; then
     echo "" >&2
