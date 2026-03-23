@@ -13,6 +13,108 @@
 
 ---
 
+## Technology Stack
+
+<!-- Fill in after install: list primary languages, frameworks, key libraries,
+     and infrastructure (DB, cache, queue, cloud provider). One line each. -->
+
+| Layer | Technology | Notes |
+|-------|-----------|-------|
+| Language | | |
+| Framework | | |
+| Database | | |
+| Testing | | |
+| CI/CD | | |
+
+## Commands
+
+<!-- Fill in after install: the exact commands developers run day-to-day.
+     All commands must be copy-paste ready. -->
+
+```bash
+# Development
+<start dev server>
+
+# Build
+<build command>
+
+# Test
+<run all tests>
+<run single test>
+
+# Lint / type-check
+<lint command>
+<type-check command>
+```
+
+## Architecture
+
+<!-- Fill in after install: directory structure and what lives where.
+     One sentence per directory is enough. -->
+
+```
+<project root>/
+├── <dir>/   # <purpose>
+├── <dir>/   # <purpose>
+└── <dir>/   # <purpose>
+```
+
+**Entry points:** <main file / CLI / server bootstrap>
+**Key config files:** <list>
+
+## Environment
+
+<!-- Fill in after install: required env vars, how to get them, and any
+     local setup steps beyond installing dependencies. -->
+
+**Required env vars:**
+```
+<VAR>=<description / where to get it>
+```
+
+**First-time setup:**
+1. <step>
+2. <step>
+
+## Testing
+
+<!-- Fill in after install: where tests live, how they're organized,
+     and any non-obvious patterns (fixtures, factories, mocking approach). -->
+
+- **Test location:** `<path>`
+- **Run all tests:** `<command>`
+- **Run one file:** `<command>`
+- **Test naming convention:** `<pattern>`
+
+## Pre-commit Workflow
+
+Before every commit, run in order:
+
+```bash
+# 1. Lint
+<lint command>
+
+# 2. Type-check
+<type-check command>
+
+# 3. Tests
+<test command>
+```
+
+<!-- If the repo has a pre-commit hook that runs these automatically,
+     note it here so Claude doesn't run them twice. -->
+
+## Rules
+
+<!-- Fill in after install: hard constraints specific to THIS project.
+     Complement (don't duplicate) CONVENTIONS.md. -->
+
+- Never <project-specific constraint>
+- Always <project-specific requirement>
+- <add as discovered>
+
+---
+
 ## Conventions
 
 Read `CONVENTIONS.md` before writing or reviewing any code. All coding decisions
@@ -25,7 +127,9 @@ lists all available skills and their triggers — when a conversation matches a 
 the skill with the `Skill` tool before responding.
 
 To add a skill:
-1. Write a `.md` file in `.claude/skills/` with frontmatter (`version`, `updated`) and sections (`## Purpose`, `## Trigger`, `## Process`)
+1. Write a `SKILL.md` file in `.claude/skills/<name>/` with required frontmatter
+   (`version`, `updated`, `skill_type`, `hierarchy_level`, `parent_skills`, `uses_skills`)
+   and sections (`## Purpose`, `## Trigger`, `## Process`)
 2. Run `bash .claude/hooks/payload-depot-skill-check.sh` — it detects unregistered skills
 3. Add an entry to `.claude/skills/registry.md` following the existing format
 

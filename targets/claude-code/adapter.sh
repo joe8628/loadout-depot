@@ -19,6 +19,7 @@ adapter_validate() {
 
 adapter_pre_install() {
   mkdir -p ".claude/hooks"
+  mkdir -p ".claude/commands"
 }
 
 adapter_post_install() {
@@ -30,6 +31,10 @@ adapter_post_install() {
   chmod +x ".claude/hooks/payload-depot-health-check.sh"
   cp "$PAYLOAD_DEPOT_DIR/targets/claude-code/payload-depot-skill-check.sh"  ".claude/hooks/payload-depot-skill-check.sh"
   chmod +x ".claude/hooks/payload-depot-skill-check.sh"
+  # Install slash commands
+  cp "$PAYLOAD_DEPOT_DIR/targets/claude-code/commands/review.md"  ".claude/commands/review.md"
+  cp "$PAYLOAD_DEPOT_DIR/targets/claude-code/commands/handoff.md" ".claude/commands/handoff.md"
+  cp "$PAYLOAD_DEPOT_DIR/targets/claude-code/commands/debug.md"   ".claude/commands/debug.md"
   # Clear the verified marker so the health check runs on the next session start
   rm -f ".payload-depot-verified"
 }
