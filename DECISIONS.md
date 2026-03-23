@@ -150,3 +150,17 @@
 - **Rationale:** Agents that require multi-step reasoning over ambiguous evidence (architecture design, root cause analysis, security threat modelling) benefit from opus. Agents with well-structured, mechanical tasks (doc generation, issue logging) don't need it and run faster and cheaper on haiku.
 - **Affected files:** All `.claude/agents/*.md`
 - **Date:** 2026-03-22
+
+### WARNINGS.md as a persistent warning tracker
+- **Decision:** Created `WARNINGS.md` at the repo root as a commit-tracked file where any agent can append open warnings with `open`/`fixed` status.
+- **Alternatives considered:** GitHub Issues — requires network and auth; `docs/issues/` (existing issue-logger pattern) — good for bugs but issue-logger is invoked by agents mid-session, not by review tooling; inline TODO comments — not visible across sessions.
+- **Rationale:** A single markdown file committed to the repo gives all agents (and humans) a shared, session-persistent view of known issues without requiring external tooling. The `/review` slash command can append to it directly. Status is flipped in-place when fixed.
+- **Affected files:** `WARNINGS.md` (new)
+- **Date:** 2026-03-22
+
+### agents/ and .claude/agents/ are kept in sync manually
+- **Decision:** `agents/` (install source) and `.claude/agents/` (live repo copy) are separate directories synced by hand rather than symlinked or auto-generated.
+- **Alternatives considered:** Symlink `.claude/agents/` → `agents/` — breaks the pattern established by skills (`.claude/skills/` ↔ `skills/`); single directory with a flag — requires changes to the install script's path logic.
+- **Rationale:** Mirrors the existing `skills/` ↔ `.claude/skills/` pattern that the whole install system is built around. Consistency outweighs the sync risk, which is low (agents change infrequently).
+- **Affected files:** `agents/`, `.claude/agents/`
+- **Date:** 2026-03-22

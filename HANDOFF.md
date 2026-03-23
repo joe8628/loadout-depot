@@ -423,3 +423,43 @@
 - **Gap to address:** `targets/claude-code/adapter.sh` does not copy `.claude/agents/` to target projects on install. Decide whether agents should be installed alongside skills, and if so update `adapter_pre_install` to create `.claude/agents/` and `adapter_post_install` to copy agent files. Add install tests to cover it.
 - **Gap to address:** Consider adding a `payload-depot-agent-check.sh` validator (parallel to `payload-depot-skill-check.sh`) that verifies all agent files have the required frontmatter fields (name, description, tools, model)
 - Next milestone remains: v1.2 OpenSpec suite (F-008–F-016), start with F-008 (openspec-init) per FEATURES.md
+
+---
+
+### Agent: Claude Sonnet 4.6
+**Completed:** 2026-03-22
+**Task:** Wire .claude/agents/ into install adapter + create payload-depot-agent-check.sh validator + fix stale comments + create WARNINGS.md
+
+#### Output Files
+- `targets/claude-code/payload-depot-agent-check.sh` — new: 4-layer validator (presence, frontmatter fields, required sections, readability); exits 1 on any failure; warns on missing `model` field
+- `.claude/hooks/payload-depot-agent-check.sh` — live copy of the above
+- `targets/claude-code/adapter.sh` — `adapter_pre_install` now creates `.claude/agents`; `adapter_post_install` installs and chmods `payload-depot-agent-check.sh`; fixed stale `rig install` → `payload-depot install` in line 3 comment
+- `targets/claude-code/payload-depot-health-check.sh` — added `check_file` + `check_exec` for agent-check; added delegation block; bumped agent count threshold from ≥9 to ≥11; fixed `# Loadout Depot` → `# Payload Depot` in header comment
+- `.claude/hooks/payload-depot-health-check.sh` — live copy synced
+- `agents/architect.md` through `agents/test-writer.md` (9 files) — synced from `.claude/agents/` to pick up new frontmatter format (name/description/tools/model)
+- `agents/refactor.md` — new: added to source agents/ dir so install copies it to target projects
+- `agents/release-manager.md` — new: added to source agents/ dir so install copies it to target projects
+- `tests/test_install.sh` — 13 new tests across 5 groups: agent-check-installed, agent-check-agents-present, agent-check-passes-fresh-install, agent-check-fails-missing-frontmatter, agent-check-fails-missing-sections
+- `WARNINGS.md` — new: persistent warning tracker; W-001 (frontmatter scan scopes whole file) and W-002 (hardcoded ≥11 threshold) logged as open
+
+#### Assumptions Made
+- `agents/` (root-level, source for installs) and `.claude/agents/` (live copy for this repo) must be kept in sync manually — there is no automated sync between them. The source of truth is `.claude/agents/`; `agents/` is the install source.
+- The agent-check validator treats `model` as optional (warn, not fail) — consistent with Claude Code docs where `model` is optional in subagent frontmatter
+- `≥11` threshold is acceptable for now; W-002 tracks the fix. The threshold is a coarse sanity check — the agent-check validator is the real quality gate
+- WARNINGS.md is committed (not gitignored) so all agents share visibility into open issues
+
+#### What Was Not Done
+- W-001 not fixed: `payload-depot-agent-check.sh` still scans the full file for frontmatter fields rather than scoping to the frontmatter block — logged in WARNINGS.md
+- W-002 not fixed: hardcoded `≥11` threshold not yet made dynamic — logged in WARNINGS.md
+- No `tests/test_agent_check.sh` created as a standalone test file parallel to `tests/test_skill_check.sh` — agent-check behaviour is covered through the install test suite instead
+- `AGENTS.md.template` (in `targets/claude-code/`) not updated to include `release-manager` and `refactor` entries — target projects will get the agent files but their `AGENTS.md` won't document them
+
+#### Uncertainties
+- The `agents/` ↔ `.claude/agents/` dual-directory pattern is fragile. If someone edits one without the other, they drift silently. No check exists for this drift.
+- `payload-depot-agent-check.sh` is not called standalone in any test — it is only exercised via the install test suite. Edge cases (empty dir, non-UTF-8 file) are not directly tested.
+
+#### Instructions for Next Agent
+- Run `bash tests/test_install.sh && bash tests/test_skill_check.sh` before any changes (103 + 17 = 120 tests, all passing)
+- Review `WARNINGS.md` — W-001 and W-002 are open and actionable
+- `AGENTS.md.template` at `targets/claude-code/AGENTS.md.template` does not include `release-manager` or `refactor` — add entries so target projects get complete documentation on install
+- Next milestone: v1.2 OpenSpec suite (F-008–F-016), start with F-008 (openspec-init) per FEATURES.md
