@@ -4,6 +4,32 @@
 
 ### Agent: Claude Sonnet 4.6
 **Completed:** 2026-03-22
+**Task:** Add release-manager and refactor entries to AGENTS.md.template
+
+#### Output Files
+- `targets/claude-code/AGENTS.md.template` — added `release-manager` and `refactor` agent entries matching the content in `AGENTS.md`; fixed stale `rig install` → `payload-depot install` in the header comment
+
+#### Assumptions Made
+- Entry content copied verbatim from `AGENTS.md` (the live registry) — `AGENTS.md.template` is meant to be a faithful copy of what target projects receive, so no rewording was done
+- The stale `rig install` comment was an artifact of the earlier rename and was a straightforward fix
+
+#### What Was Not Done
+- No tests added specifically for `AGENTS.md.template` content — the install test suite covers that agent files are present and valid in the installed directory, but does not assert that the template's documentation entries match the installed agent files
+- `AGENTS.md.template` at `targets/gemini/` and `targets/openai/` (if they exist) were not checked for the same gap — only the `claude-code` target was in scope
+
+#### Uncertainties
+- The `agents/` ↔ `.claude/agents/` ↔ `AGENTS.md` ↔ `targets/claude-code/AGENTS.md.template` four-way sync is still a manual process. Any future agent addition must update all four locations. No automated check enforces this.
+
+#### Instructions for Next Agent
+- Run `bash tests/test_install.sh && bash tests/test_skill_check.sh` before any changes (103 + 17 = 120 tests, all passing)
+- Check `targets/gemini/` and `targets/openai/` for their own `AGENTS.md.template` equivalents — they may also be missing `release-manager` and `refactor` entries
+- Next milestone: v1.2 OpenSpec suite (F-008–F-016), start with F-008 (openspec-init) per FEATURES.md
+- Review `WARNINGS.md` — W-001 and W-002 remain open and actionable
+
+---
+
+### Agent: Claude Sonnet 4.6
+**Completed:** 2026-03-22
 **Task:** Expand CLAUDE.md template with scaffolded sections + add slash commands
 
 #### Output Files
