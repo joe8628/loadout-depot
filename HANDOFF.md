@@ -489,3 +489,39 @@
 - Review `WARNINGS.md` — W-001 and W-002 are open and actionable
 - `AGENTS.md.template` at `targets/claude-code/AGENTS.md.template` does not include `release-manager` or `refactor` — add entries so target projects get complete documentation on install
 - Next milestone: v1.2 OpenSpec suite (F-008–F-016), start with F-008 (openspec-init) per FEATURES.md
+
+### Agent: Claude Sonnet 4.6
+**Completed:** 2026-03-23
+**Task:** Add three quality hooks — PostToolUse lint, PreToolUse secret scan, PostToolUse test summary
+
+#### Output Files
+- `targets/claude-code/post-edit-lint.sh` — new PostToolUse hook; fires on Write and Edit; detects language from file extension; runs ruff (Python), eslint (JS/TS), clang-tidy (C/C++), shellcheck (shell); exits 1 when violations found so Claude self-corrects in-session
+- `targets/claude-code/pre-write-secret-scan.sh` — new PreToolUse hook; fires on Write and Edit; scans new content for 10 high-confidence secret patterns (AWS key IDs, PEM private keys, GitHub/Slack/Anthropic/OpenAI tokens); exits 2 to block the write; `grep -P -- "$pattern"` required to handle dash-prefixed patterns
+- `targets/claude-code/post-bash-test.sh` — new PostToolUse hook; fires on Bash; detects test runner commands (pytest, bats, jest, npm test, make test, bash tests/*.sh); parses pass/fail counts from common formats; emits structured one-liner; silent on non-test commands; exits 0 always
+- `targets/claude-code/settings.json.template` — added PreToolUse (Write, Edit → secret-scan) and PostToolUse (Write, Edit → post-edit-lint; Bash → post-bash-test) entries
+- `targets/claude-code/adapter.sh` — adapter_post_install now copies and chmods all three hook scripts
+- `.claude/hooks/post-edit-lint.sh`, `.claude/hooks/pre-write-secret-scan.sh`, `.claude/hooks/post-bash-test.sh` — live copies for this repo
+- `.claude/settings.json` — live settings synced with same PreToolUse/PostToolUse entries
+- `tests/test_install.sh` — 18 new tests: install presence + executable, settings.json wiring, functional behavior of each hook; 128 + 17 = 145 total, all passing
+
+#### Assumptions Made
+- Linting hooks exit 1 (not 0) so Claude sees violations as a tool failure and self-corrects; this is intentional — post-edit-lint is not advisory, it's a feedback loop
+- `grep -P -- "$pattern"` (with `--`) is required for patterns starting with dashes (PEM headers); without `--`, grep misinterprets the leading dashes as unknown flags and silently returns no match
+- Secret scan uses `check_pattern` with `2>/dev/null` to suppress grep errors from patterns that require Perl mode on systems without PCRE grep — those patterns are skipped gracefully rather than blocking writes
+- post-bash-test.sh parses from the `tool_response` field in PostToolUse stdin JSON; handles both string and object response shapes defensively
+
+#### What Was Not Done
+- `post-edit-lint.sh` does not auto-fix (ruff format, prettier) — only lints and reports; auto-fixing is a higher-risk operation that warrants a separate decision
+- Secret scan does not use `gitleaks` or `detect-secrets` — relies on `grep -P` only, no external tools required; upgrade path noted in code
+- Health check thresholds not updated — the new hooks are validator scripts, not agents, so the ≥11 agent threshold is unaffected
+
+#### Uncertainties
+- Claude Code's `matcher` field regex support: using exact tool names (`"Write"`, `"Edit"`, `"Bash"`) which are confirmed to work; pattern matchers (e.g., `"Write|Edit"`) not tested and kept as separate entries to be safe
+- `tool_response` shape for Bash PostToolUse may vary by Claude Code version — handled defensively with `jq` type check
+
+#### Instructions for Next Agent
+- Run `bash tests/test_install.sh && bash tests/test_skill_check.sh` before any changes (128 + 17 = 145 tests, all passing)
+- Three new hooks now active in this repo's `.claude/settings.json` — they fire on every Write/Edit/Bash during this session
+- Review `WARNINGS.md` — W-001 and W-002 remain open
+- Next milestone: v1.2 OpenSpec suite (F-008–F-016), start with F-008 (openspec-init) per FEATURES.md
+
