@@ -3,6 +3,43 @@
 ---
 
 ### Agent: Claude Sonnet 4.6
+**Completed:** 2026-03-22
+**Task:** Expand CLAUDE.md template with scaffolded sections + add slash commands
+
+#### Output Files
+- `targets/claude-code/CLAUDE.md.template` — added 7 new scaffolded sections with placeholder comments: Technology Stack, Commands, Architecture, Environment, Testing, Pre-commit Workflow, Rules; project-specific sections placed before infra sections
+- `targets/claude-code/commands/review.md` — new slash command: reviews changed files, runs tests, reports Blockers/Warnings/Suggestions
+- `targets/claude-code/commands/handoff.md` — new slash command: automates post-feature HANDOFF.md ritual, commits, and pushes
+- `targets/claude-code/commands/debug.md` — new slash command: enforces hypothesis-first debugging loop
+- `targets/claude-code/adapter.sh` — `adapter_pre_install` creates `.claude/commands/`; `adapter_post_install` copies all 3 command files
+- `.claude/commands/review.md` — live copy for this repo
+- `.claude/commands/handoff.md` — live copy for this repo
+- `.claude/commands/debug.md` — live copy for this repo
+- `CLAUDE.md` — header restored to correct values after template placeholder regression was caught by /project:review
+
+#### Assumptions Made
+- Commands installed into both `.claude/commands/` (live) and `targets/claude-code/commands/` (template) — target projects get them on `payload-depot install`
+- `/project:review` references project-specific test commands from CLAUDE.md rather than hardcoding them, making it reusable across target projects
+- `/project:handoff` hardcodes "Claude Sonnet 4.6" as agent name — acceptable for now, could be made dynamic later
+- The CLAUDE.md header regression (template stubs overwriting project values) was caused by the `CLAUDE.md.template` edit being reflected in the live `CLAUDE.md` via the `@` import system — the fix was already in the last commit
+
+#### What Was Not Done
+- No tests added for command file installation — the adapter test suite covers `post_install` broadly but doesn't assert specific `.claude/commands/` file presence
+- SPEC.md not updated to document the commands subsystem
+- `/project:handoff` does not auto-detect the agent name or task from git context — it relies on Claude filling those in from conversation context
+
+#### Uncertainties
+- The CLAUDE.md template regression root cause needs confirmation: was it the `@` import expanding the template at read time, or a direct overwrite? If the former, the live `CLAUDE.md` may be vulnerable to future template edits again.
+
+#### Instructions for Next Agent
+- Run `bash tests/test_install.sh && bash tests/test_skill_check.sh` before any changes (90 + 17 = 107 tests, all passing)
+- Three slash commands are live: `/project:review`, `/project:handoff`, `/project:debug`
+- Consider adding install tests that assert `.claude/commands/review.md`, `handoff.md`, `debug.md` exist after `adapter_post_install`
+- Next milestone: v1.2 OpenSpec suite (F-008–F-016), start with F-008 (openspec-init) per FEATURES.md
+
+---
+
+### Agent: Claude Sonnet 4.6
 **Completed:** 2026-03-21
 **Task:** Rename loadout-depot → payload-depot throughout the codebase
 
